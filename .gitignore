@@ -1,0 +1,47 @@
+# Secrets and credentials
+.env
+.env.*
+!.env.example
+auth/
+secrets/
+*.cred
+*.pem
+*.key
+*.p12
+*.session.json
+*.cookies.json
+
+# Databases and runtime
+*.db
+*.db-*
+*.duckdb
+*.duckdb-*
+*.sqlite
+*.sqlite3
+/data/
+/var/quant/
+
+# Screenshots and artifacts
+screenshots/
+artifacts/private/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
