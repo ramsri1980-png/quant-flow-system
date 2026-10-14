@@ -21,8 +21,14 @@ async def run(url: str, api_key: str, nonce: str | None = None) -> dict:
     ) as http:
         health_url = url.replace("/mcp", "/healthz")
         h = await http.get(health_url)
+        # /healthz may be behind Cloudflare Access; only /mcp needs to be reachable
+        # with the API key. Do not fail the probe on a non-200 healthz.
         if h.status_code != 200:
-            raise RuntimeError(f"healthz returned {h.status_code}")
+            print(
+                f"warning: healthz returned {h.status_code} "
+                "(expected if behind Cloudflare Access)",
+                file=sys.stderr,
+            )
         async with streamable_http_client(url, http_client=http) as (r, w, _):
             async with ClientSession(r, w) as session:
                 init = await session.initialize()

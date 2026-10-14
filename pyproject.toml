@@ -22,6 +22,8 @@ dependencies = [
     "scipy>=1.14",
     "typer>=0.15",
     "rich>=13.9",
+    "pyjwt[crypto]>=2.13",
+    "pandas-market-calendars>=5.0",
 ]
 
 [build-system]
@@ -71,3 +73,13 @@ source = ["src/quantflow"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[[tool.mypy.overrides]]
+module = [
+  "quantflow.adapters.mcp.*",
+  "quantflow.cli.mcp_probe",
+]
+ignore_errors = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
