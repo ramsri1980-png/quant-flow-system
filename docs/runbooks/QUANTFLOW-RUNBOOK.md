@@ -819,3 +819,11 @@ docs/reference/
 ---
 
 **END OF RUNBOOK v3.1**
+
+---
+
+## NEW RQ — ADDED 2026-10-14
+
+| RQ | Resolution | Deadline |
+|---|---|---|
+| RQ-007 | MCP SDK v1.30.0 → v2.2.0 migration. FastMCP→MCPServer, camelCase→snake_case, httpx→httpx2, streammablehttp_client removal, McpError→MCPError. Rewrite server.py + mcp_probe.py alongside Feature 070 tool surface. | Before Feature 070 |
