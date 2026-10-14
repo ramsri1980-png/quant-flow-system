@@ -1,0 +1,73 @@
+[project]
+name = "quantflow"
+version = "0.0.0"
+description = "Research-only options flow system"
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "structlog>=24.4",
+    "orjson>=3.10",
+    "msgspec>=0.18",
+    "httpx>=0.28,<0.29",
+    "tenacity>=9.0",
+    "starlette>=0.50",
+    "uvicorn[standard]>=0.48",
+    "mcp==1.30.0",
+    "aiosqlite>=0.20",
+    "duckdb==1.5.6",
+    "pyarrow>=18.0",
+    "polars>=1.0",
+    "numpy>=2.0",
+    "scipy>=1.14",
+    "typer>=0.15",
+    "rich>=13.9",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=9,<10",
+    "pytest-asyncio>=1.0",
+    "pytest-cov>=6.0",
+    "hypothesis>=6.100",
+    "freezegun>=1.5",
+    "respx>=0.22",
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "pre-commit>=4.0",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+packages = ["quantflow"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --strict-config"
+asyncio_mode = "auto"
+markers = [
+    "live: tests requiring authorized network access",
+    "slow: tests taking over 1 second",
+]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/quantflow"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
