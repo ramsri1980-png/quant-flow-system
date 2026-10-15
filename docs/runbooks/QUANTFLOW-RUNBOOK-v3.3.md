@@ -1164,3 +1164,21 @@ Working tree:
 M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
 ?? scripts/update_runbook.py
 ```
+
+
+## SESSION 3 POST-CLOSE -- 2026-10-15
+
+Beyond the original Session 3 scope:
+
+- ADR-001 amended: source-scope only; ARCH Vol 3 E/F apply in full to authorized sources
+- Spec errata applied: C5 (17.5), C6 (20.72), C9 (DuckDB BIGINT), RFC 8785 22.7,
+  dedup 5.3, backup M.1
+- Anti-detection audit: ARCH Vol 3 E/F byte-identical to freeze
+  (hash 2d7a90e533196af61745bc4efd3259b7b64b519b8ec78662392b50a911285e23)
+- Feature briefs 050, 052, 064 repaired (Claude had silently weakened E/F coverage)
+- Claude's "drop schedule jitter" and "exclude mimicry/fingerprint" rejected
+- Safe-update conventions + scripts/update_runbook.py + qfpush alias added
+- Evaluation framework reviewed 2026-10-15: additive, no anti-detection impact
+  (see STEPS-EVAL.md, migration DuckDB 052, brief 041b, 4 new observability categories)
+- Ready for Feature 005: /qf-propose @openspec/prompts/005-domain-types-units-clock.md
+
