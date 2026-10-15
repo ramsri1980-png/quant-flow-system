@@ -26,3 +26,20 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - canonical JSON hashing rules, CANONICAL_TRACE_NAMESPACE value, content-hash composition for dedup: unspecified.
 - Offsite backup target: ARCH V1 says rclone crypt → B2/R2; runbook uses MEGA for the LUKS header only.
 - Provider payload schemas and raw_color → normalized_meaning mapping tables: need fixtures.
+
+## Resolved 2026-10-15 (Session 4)
+
+### C1 — bundle version
+Resolved: current bundle is `docs/reference/release-v2.0.5.1-v5.1.5.1/`
+(11 files, SHA256SUMS verified). Pre-freeze references to v2.0.5 / v5.1.5
+are historical. All new work cites v2.0.5.1 / v5.1.5.1.
+Status: RESOLVED_FROM_SOURCE. Not blocking.
+
+### C8 — column type rule
+Resolved: SPEC V2 §19.4.4 is canonical (it is the DDL home per SPEC V1
+§22.1 doc map). SQLite uses INTEGER (64-bit); DuckDB uses BIGINT
+(DuckDB INTEGER is 32-bit and overflows epoch-ms). SPEC V1 §19.4.4's
+"All are BIGINT" is a summary, not the rule. In `domain/`, use Python
+`int` with range guards; the storage type is declared per column in
+the migration DDL.
+Status: RESOLVED_FROM_SOURCE. Not blocking.
