@@ -1267,3 +1267,67 @@ Working tree:
 ```
 (clean)
 ```
+
+
+## HYBRID PROMPT RECIPE -- feature spec workflow
+
+Purpose: for every future feature NNN, produce ONE file at
+openspec/prompts/NNN-slug.md that combines three inputs.
+
+Inputs:
+1. ChatGPT prompt  -- process discipline. Yields the Process block:
+   RESOLVED_FROM_SOURCE / PROPOSED / BLOCKED taxonomy,
+   one-question-at-a-time, no-silent-adoption of thresholds /
+   notifications / schema amendments, exact inputs-units-IDs-store-
+   ownership, map each requirement to a source, check repo state
+   not only plans.
+2. Claude prompt   -- feature content. Yields header (Epic, Depends,
+   Blockers, Capabilities), Sources list with SPEC/ARCH section
+   citations, numbered Requirements, Seed scenarios, Open questions
+   (do-not-invent), Out of scope.
+3. Assistant review -- cross-check against the frozen design bundle.
+   Confirms every cited section exists in docs/reference/CURRENT.
+   Flags C-items and RQ-items. Audits anti-detection impact.
+
+Output order:
+  # NNN Feature title
+  Epic | Depends | Blockers
+  Use: /qf-propose @openspec/prompts/NNN-slug.md
+  Capabilities: ...
+  Sources: SPEC Vn section, ...; ARCH Vn section, ...; runbook Task N
+
+  ## Process
+  (from ChatGPT, 6 bullets)
+
+  Requirements:
+  1. ... (maps to source)
+  2. ...
+
+  Seed scenarios: ...
+  Open questions (do not invent): ...
+  Out of scope: ...
+
+Rules:
+- ASCII-only in the file. Use -- not em-dash. Use E/F not the section-sign.
+- Every Sources citation must be grep-able in the current design bundle.
+  An unverifiable citation -> mark that requirement BLOCKED.
+- [P] values (proposed thresholds, sample sizes, horizons) require
+  explicit operator approval before /qf-apply. Never silently adopted.
+- Anti-detection gate: any feature that touches ARCH Vol 3 E or F, or
+  SPEC Vol 4 section 11, must be reviewed by the assistant before
+  commit. Frozen-layer diff (git diff 2ce33ea..HEAD on
+  ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md) must be empty.
+  Any reviewer proposal to weaken (drop jitter, exclude mimicry, weaken
+  a challenge rule, remove rate limits) is rejected and recorded in
+  openspec/conflicts-and-gaps.md under ## Rejected.
+- Installation: one-shot Python heredoc (Pattern 7). No nano, no
+  cat >> with heredoc, no base64.
+
+Per-feature flow:
+  1. Operator supplies ChatGPT prompt + Claude prompt.
+  2. Assistant reads both, drafts hybrid, checks every citation,
+     audits anti-detection, drafts in-memory.
+  3. Operator approves.
+  4. Assistant writes the file via a one-shot Python heredoc:
+     reads the target, skips if present, writes, git add, commit, push.
+  5. Run /qf-propose @openspec/prompts/NNN-slug.md
