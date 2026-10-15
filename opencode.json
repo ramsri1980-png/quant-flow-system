@@ -1,0 +1,68 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "tools": { "skill": false },
+  "permission": { "skill": "deny" },
+  "agent": {
+    "qf-plan": {
+      "description": "Spec author. Reads source; writes openspec files only.",
+      "tools": {
+        "read": true,
+        "glob": true,
+        "grep": true,
+        "write": true,
+        "edit": true,
+        "task": false,
+        "bash": false,
+        "webfetch": false,
+        "websearch": false
+      },
+      "permission": {
+        "edit": { "openspec/**": "allow", "*": "ask" }
+      }
+    },
+    "qf-build": {
+      "description": "Implementer. Writes code and tests; runs ruff, mypy, pytest.",
+      "tools": {
+        "read": true,
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "glob": true,
+        "grep": true,
+        "todowrite": true,
+        "todoread": true,
+        "task": false,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "qf-review": {
+      "description": "Read-only reviewer. Produces findings; never edits.",
+      "tools": {
+        "read": true,
+        "glob": true,
+        "grep": true,
+        "write": false,
+        "edit": false,
+        "bash": false,
+        "task": false,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "qf-doubt": {
+      "description": "Read-only adversarial review in isolation.",
+      "tools": {
+        "read": true,
+        "glob": true,
+        "grep": true,
+        "write": false,
+        "edit": false,
+        "bash": false,
+        "task": false,
+        "webfetch": false,
+        "websearch": false
+      }
+    }
+  }
+}

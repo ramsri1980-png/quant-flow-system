@@ -1043,3 +1043,30 @@ Status: not yet installed. Will be probed feature-by-feature in Session 4+.
 
 Outstanding conflicts to resolve before their prompts are used: C1, C3, C4, C10, C11, RQ-002..RQ-006 (see runbook §Open Design Conflicts).
 
+
+---
+
+## GITHUB REMOTE (2026-10-15)
+
+| Item | Value |
+|---|---|
+| Owner | `ramsri1980-png` |
+| Repo | `quant-flow-system` |
+| URL | https://github.com/ramsri1980-png/quant-flow-system |
+| SSH remote | `git@github.com:ramsri1980-png/quant-flow-system.git` |
+| Default branch | `master` |
+| Tracking branches | `master`, `chore/openspec-c12`, `feature/005-...` (pushed as created) |
+| Access | SSH key at `~/.ssh/id_ed25519` registered with GitHub |
+| First push | 2026-10-15, commits `c877019` (master) and `1eca93e` (chore/openspec-c12) |
+
+**Routine commands:**
+
+```bash
+# Push current branch
+git push
+
+# Push new branch
+git push -u origin <branch>
+
+# Fetch + rebase before starting work
+git fetch origin && git rebase origin/master

@@ -851,6 +851,9 @@ migrations/
     050_core_snapshot_check_and_exit_mirror.sql (PROPOSED CORE REPAIR)
         -- Null-safe snapshot CHECK; expanded exit_evaluations mirror.
         -- Depends on core 040 and 042, NOT on research 043-045.
+    051_dealer_map_regime.sql            (PROPOSED CORE, C12)
+        -- dealer_map_regime: 1:1 append-only child of dealer_level_maps (regime, net/gross, sign_fragile).
+        -- Depends on baseline dealer_level_maps only; NOT on 050 or research 043-045.
 
 Forward-only. Never edit an applied migration.
 
@@ -870,7 +873,7 @@ Migration runner contract:
 
   Fresh: apply 000 once, record covered IDs, then apply enabled pending
   core migrations in dependency order: SQLite 070 then 071;
-  DuckDB 042 then 050. Reserved AE/AF/AG numbers are NOT automatically
+  DuckDB 042, 050, then 051. Reserved AE/AF/AG numbers are NOT automatically
   applied or marked covered because their number is lower than 050.
 
   Upgrade: never replay 000. Compute

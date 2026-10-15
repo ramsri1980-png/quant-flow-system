@@ -603,6 +603,22 @@ AI.2 Stops
 AI.3 Additional Constants
 
   MIN_VEGA                            0.005
+  # --- C12 dealer/greeks constants [RECOMMENDED values; running the patch script = approval] ---
+  DEALER_T_MIN_S                      300
+  GREEKS_SIGMA_MIN                    0.01
+  GREEKS_SIGMA_MAX                    5.00
+  DEALER_COVERAGE_MIN                 0.80
+  DEALER_R_PCTL_MIN                   20     # R_min = this percentile of trailing net/gross R, (ticker, lane)
+  DEALER_R_PCTL_FULL                  80     # R_full = this percentile; window/min-days reuse ZERO_DTE_PERCENTILE_*
+  DEALER_R_MIN_FALLBACK               0.10   # only until MIN_DAYS history exists; output labelled "fallback"
+  DEALER_R_FULL_FALLBACK              0.50
+  DEALER_STALE_TTL_MULT               3      # non-0DTE stale ref = this * lane dealer_ttl_s; 0DTE uses ZERO_DTE_DEALER_MAP_STALE_MAX_S
+  FLIP_GRID_HALF_MULT                 3      # grid half-width = this * m_daily (ARCH V4 D.15)
+  FLIP_GRID_POINTS                    41
+  FLIP_TOL_MULT                       0.25   # FLIP_TOL = this * m_daily
+  LEVEL_THETA                         0.50
+  LEVEL_EPS                           0.10
+  VANNA_THETA_PCTL                    90
   MIN_POSITIVE_SPOT_MICROS            10000000
   FLIP_DISAGREEMENT_PERSIST_SNAPS     2
   TRACE_FLAG_COUNT_ALERT              5
@@ -648,7 +664,7 @@ AI.3 Additional Constants
     ZERO_DTE_CONFIRMATION_HOLD_S        60
     ZERO_DTE_DEALER_MAP_FRESHNESS_S     300
     ZERO_DTE_DEALER_MAP_STALE_MAX_S     900
-    ZERO_DTE_VANNA_RELEVANCE_MIN        0.10
+    ZERO_DTE_VANNA_RELEVANCE_MIN        0.10   # DEPRECATED (C12): replaced by VANNA_THETA_PCTL rule, ARCH V4 D.14c
     ZERO_DTE_OPPOSITE_FLOW_LIMIT        0.25
     ZERO_DTE_ALERT_MAX_AGE_S            300
     ZERO_DTE_MEMBER_LATENCY_MAX_MS      3000
@@ -950,7 +966,7 @@ AI.17 Enums
 
 AI.18 Sign Conventions
 
-  Dealer exposure:            per signed fixture
+  Dealer exposure:            dealer-signed per explicit model (OI_NAIVE | SIGNED_FLOW | PROVIDER), ARCH V4 D.26.4
   H_$ hedge flow:             negative of dealer flow
   FDI:                        signed delta-weighted
   Vanna:                      ∂Δ/∂σ

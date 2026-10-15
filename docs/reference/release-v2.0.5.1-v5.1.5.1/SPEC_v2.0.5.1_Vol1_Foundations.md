@@ -777,6 +777,8 @@ component in this volume or its owning volume.
                       ZERO_DTE_CONFIRMATION_BUFFER_ATR · ATR_5m).
           (d) ConfluenceScore ≥
               ZERO_DTE_HIGH_CONFLUENCE_MIN (0.80).
+          (e) Dealer regime is POSITIVE or NEGATIVE (not UNINFORMATIVE/UNAVAILABLE, not sign_fragile) and the map is
+              not built on model A alone for 0DTE (ARCH Vol 4 §D.26.4).  [C12]
 
         Effect: immediate upgrade; revised target/support/
         invalidation and exact confirming evidence. If
@@ -1440,7 +1442,8 @@ SECTION 22 — APPENDIX
 
 22.2 Sign Conventions
 
-  Dealer exposure per signed fixture.
+  Dealer exposure is dealer-signed by an explicit model (OI_NAIVE | SIGNED_FLOW | PROVIDER); see ARCH Vol 4 §D.26.4.
+  Gamma_$ per +1% = Gamma*S^2*0.01*M*OI; Vanna_$ per vol pt = Vanna*0.01*S*M*OI; Charm_$ per day = Charm/365*S*M*OI.
   H_$ hedge flow per ARCH Vol 4 §D.21.
   FDI signed per ARCH Vol 4 §D.25.
   Vanna = ∂Δ/∂σ.
