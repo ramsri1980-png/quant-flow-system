@@ -1,0 +1,29 @@
+schema: spec-driven
+
+# Injected into EVERY artifact prompt — keep short (tokens). Full rules: openspec/constitution.md
+context: |
+  QuantFlow: local single-operator options-flow RESEARCH system (Python 3.14, uv, SQLite+DuckDB, asyncio).
+  Authority: docs/reference/CURRENT (SPEC v2.0.5.1 V1-V7, ARCH v5.1.5.1 V1-V4); cite "SPEC V3 §8.4"/"ARCH V4 §D.5".
+  Invariants: fail closed; integer money (_cents option, _micros underlying, _mills levels); pure kernels;
+  only quantd writes DBs; no orders, no LLM/ML in decision path; research-only 0DTE/1DTE.
+  Known doc conflicts: openspec/conflicts-and-gaps.md. Feature briefs: openspec/prompts/NNN-*.md.
+
+rules:
+  proposal:
+    - Name the feature brief used (prompts/NNN) and the epic; list source sections cited.
+    - State what is out of scope exactly as the brief does.
+    - Do not propose code; do not add requirements the source docs do not contain.
+  specs:
+    - Use "### Requirement: <name>" with SHALL/MUST wording, each followed by "#### Scenario:" using WHEN/THEN.
+    - Every requirement cites its source (e.g. "Source: ARCH V4 §D.5"). No source → it goes to Open Questions, not a requirement.
+    - Include at least one failure/boundary scenario per requirement (missing, stale, malformed, duplicate, restart).
+    - Never invent numeric values; use named constants from ARCH V1 §AI.3 by name.
+  design:
+    - Add an "Open Questions" section listing every gap or conflict from the brief and any you find; mark each BLOCKING or NON-BLOCKING.
+    - Respect port/adapter separation: no provider logic in kernels; kernels pure.
+    - List migrations touched (store, id, component) and confirm none edits an applied migration.
+    - List reused modules from openspec/modules.md; a new module requires justification.
+  tasks:
+    - Tests first: each task group starts with red tests mapped to the 10 test classes in the brief.
+    - Final task group: run ruff, mypy --strict, pytest; verify nothing touches /data; update the conflicts log if resolved.
+    - Mark BLOCKING open questions as tasks that must be resolved with the operator before implementation.
