@@ -968,3 +968,14 @@ git log --oneline | head -3
 git status --short
 
 Session 3 next: openspec init --tools opencode in pocs/interface.
+
+---
+
+## APPENDIX D — CLAUDE'S PACKAGES (deferred)
+
+Location: `~/Downloads/qf/` and `~/Downloads/qf-oc/`.
+Purpose: qf/ = 41 OpenSpec feature prompts + constitution + config; qf-oc/ = 9 playbooks + 6 qf-* command wrappers.
+Status: not yet installed. Will be probed feature-by-feature in Session 4+.
+
+Outstanding conflicts to resolve before their prompts are used: C1, C3, C4, C10, C11, RQ-002..RQ-006 (see runbook §Open Design Conflicts).
+
