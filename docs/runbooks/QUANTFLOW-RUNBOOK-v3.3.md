@@ -1221,3 +1221,26 @@ Rules:
 
 Banned for doc edits: nano, cat >> with heredocs, base64 -d, triple-quoted
 strings inside an outer heredoc. Each failed at least once in Session 3.
+
+### Runbook auto-update - 2026-10-15T21:13:54Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+17eb0be docs: add Pattern 7 to runbook conventions
+28dfe5a docs: runbook v3.3 Session 3 post-close status
+607cf3e docs: add safe-update conventions + reusable runbook updater
+0659c05 docs: add frozen-layer audit pointer to ADR-001
+5db02f0 spec+prompt: errata (C5/C6/C9, RFC 8785, dedup, backup) + ADR-001 amendment + anti-detection brief repairs
+f3ac486 merge: C12 kit + OpenCode setup + runbook GitHub remote
+6d9063b docs: record GitHub remote in runbook
+1eca93e opencode: merge C12 kit at repo root
+6207b98 docs: C12 dealer/greeks corrections, DuckDB 051 dealer_map_regime
+```
+
+Working tree:
+```
+(clean)
+```
