@@ -46,3 +46,13 @@ review must satisfy every §E and §F rule in full:
 "Source scope" is not "capability scope." Reducing the set of
 authorized sources never reduces what §E/§F require for the sources
 that remain authorized.
+
+## Frozen-layer audit pointer
+
+Prove ARCH Vol 3 §E/§F is unmodified from the v5.1.5.1 freeze (commit 2ce33ea):
+
+    git show 2ce33ea:docs/reference/release-v2.0.5.1-v5.1.5.1/ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md | sha256sum
+
+Expected: 2d7a90e533196af61745bc4efd3259b7b64b519b8ec78662392b50a911285e23
+
+Errata patches to SPEC Vol 1-4 and ARCH Vol 1-2 do not touch ARCH Vol 3 or SPEC Vol 4 §11.
