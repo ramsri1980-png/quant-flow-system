@@ -1070,3 +1070,97 @@ git push -u origin <branch>
 
 # Fetch + rebase before starting work
 git fetch origin && git rebase origin/master
+---
+
+## CONVENTIONS — SAFE DOCUMENT UPDATES (2026-10-15)
+
+Rule: never use nano, cat >> with heredocs, or manual copy-paste to modify files under docs/reference/, docs/runbooks/, 
+docs/architecture/adr/, or openspec/. Use anchored Python scripts or file-based cat/cp to modify files. Heredocs collide
+with EOF-like strings, pasted prompt lines corrupt bash state, and manual edits lose determinism.
+### Pattern 1 — Append a section (idempotent, anchored)
+
+```python
+from pathlib import Path
+p = Path("path/to/doc.md")
+text = p.read_text()
+if "## New Section Title" in text:
+    print("already present")
+else:
+    insert = "\n\n## New Section Title\n\n...content...\n"
+    idx = text.rfind("\nEND OF")
+    text = text[:idx] + insert + text[idx:]
+    p.write_text(text)
+```
+
+### Pattern 2 — Run after every `git push`
+
+```bash
+python3 scripts/update_runbook.py
+```
+
+Updates the runbook with current branch, last 10 commits, working tree status, and UTC timestamp. Idempotent.
+
+Alias in h~/.bashrc`:
+
+```bash
+alias qfpush='git push && python3 scripts/update_runbook.py'
+```
+
+### Pattern 3 — Regenerate SHA256SUMS after errata
+
+```bash
+cd docs/reference/release-v2.0.5.1-v5.1.5.1
+sha256sum *.md > SHA256SUMS
+sha256sum -c SHA256SUMS
+```
+
+### Pattern 4 — Verify frozen layer
+
+```bash
+git show 2ce33ea:docs/reference/release-v2.0.5.1-v5.1.5.1/ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md | sha256sum
+```
+
+Expected: `2d7a90e533196af61745bc4efd3259b7b64b519b8ec78662392b50a911285e23`
+
+### Pattern 5 — Pre-commit verification
+
+```bash
+git diff 2ce33ea..HEAD -- docs/reference/release-v2.0.5.1-v5.1.5.1/ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md | head
+(cd docs/reference/release-v2.0.5.1-v5.1.5.1 && sha256sum -c SHA256SUMS)
+pgrep -af 'nano|python3' || true
+```
+
+### Pattern 6 — Pitfalls to avoid
+
+| Pitfall | Cause | Prevention |
+|---|---|---|
+| `>` prompt stuck | Heredoc never terminated | Always paste full blocks; never interrupt `<<EOF` |
+| `bash: sriram@...: No such file` | Pasted prompt lines as commands | Never copy the `sriram@...$` prefix |
+| `syntax error near unexpected token` | Pasted `<branch>` placeholder | Use real values or quote |
+| Lost runbook content | Overwrote with partial `cat >` | Always use `cat >>` from a file, or Python anchor insert |
+| MANIFEST drift | Manual SHA256SUMS edit | Always regenerate with `sha256sum *.md` |
+| Python triple-quote corrupted | Triple-quoted strings inside heredoc | Write content to /tmp/file with nano, install with `cp` or `cat >>` |
+
+### Runbook auto-update - 2026-10-15T20:56:49Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+0659c05 docs: add frozen-layer audit pointer to ADR-001
+5db02f0 spec+prompt: errata (C5/C6/C9, RFC 8785, dedup, backup) + ADR-001 amendment + anti-detection brief repairs
+f3ac486 merge: C12 kit + OpenCode setup + runbook GitHub remote
+6d9063b docs: record GitHub remote in runbook
+1eca93e opencode: merge C12 kit at repo root
+6207b98 docs: C12 dealer/greeks corrections, DuckDB 051 dealer_map_regime
+c877019 docs: resolve C1 (bundle version) and C8 (column type rule)
+3c645e7 prompt(005): add ChatGPT process rigor block — RESOLVED/PROPOSED/BLOCKED taxonomy, one-question-at-a-time, no silent adoption
+532b5c2 docs: runbook v3.3 - Session 3 complete, gotchas recorded, full feature detail preserved
+56a6d22 chore(session3): zero-token OpenCode+OpenSpec setup
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+?? scripts/update_runbook.py
+```
