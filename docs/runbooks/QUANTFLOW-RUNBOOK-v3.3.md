@@ -1182,3 +1182,42 @@ Beyond the original Session 3 scope:
   (see STEPS-EVAL.md, migration DuckDB 052, brief 041b, 4 new observability categories)
 - Ready for Feature 005: /qf-propose @openspec/prompts/005-domain-types-units-clock.md
 
+
+
+### Pattern 7 -- One-shot Python heredoc for edits + commit + push
+
+Canonical pattern for every doc change. No nano, no /tmp file, no base64.
+
+Shape: one bash command, one Python heredoc, unique delimiter.
+
+    cd ~/src/quant-flow-system
+
+    python3 <<'ENDOFSCRIPT'
+    from pathlib import Path
+    import subprocess
+    REPO = Path.home() / "src" / "quant-flow-system"
+    TARGET = REPO / "docs" / "runbooks" / "SOME-FILE.md"
+    BLOCK = '''
+    ## New Section
+    content
+    '''
+    # 1. read utf-8, abort on null bytes
+    # 2. skip if section already present
+    # 3. append at marker or EOF
+    # 4. write utf-8
+    # 5. git add + commit + push current branch
+    print("DONE")
+    ENDOFSCRIPT
+
+Rules:
+- ASCII-only content in BLOCK. Use -- not em-dash. Use E/F not the section-sign.
+- Unique delimiter. Never repeat a delimiter string inside the content.
+- Do not nest heredocs. If the content needs to show a heredoc, show it indented
+  in prose, not as a live example -- this is why Pattern 7 exists.
+- Self-verify: read_text(encoding="utf-8") catches decode errors; null byte check
+  catches binary corruption before write.
+- Idempotent: check if section title already in text, skip if present.
+- One transaction: read, verify, write, add, commit, push all inside the script.
+
+Banned for doc edits: nano, cat >> with heredocs, base64 -d, triple-quoted
+strings inside an outer heredoc. Each failed at least once in Session 3.
