@@ -2067,6 +2067,19 @@ CREATE TABLE dealer_map_regime (
     created_at BIGINT NOT NULL
 );
 CREATE INDEX idx_dealer_map_regime_regime ON dealer_map_regime(regime, created_at);
+
+-- operator_alert_ratings (DuckDB 052, PROPOSED CORE; evaluation; append-only; written by quantd via quantctl rate)
+CREATE TABLE operator_alert_ratings (
+    rating_id TEXT PRIMARY KEY,
+    alert_kind TEXT NOT NULL CHECK(alert_kind IN ('FLOW_ALERT','ZERO_DTE_CLUSTER','MORNING_BRIEF','AD_HOC')),
+    alert_ref TEXT NOT NULL,
+    rating TEXT NOT NULL CHECK(rating IN ('USEFUL','NOT_USEFUL','UNSURE')),
+    reason_code TEXT,
+    note TEXT,
+    audit_id BIGINT NOT NULL,
+    rated_at BIGINT NOT NULL
+);
+CREATE INDEX idx_oar_alert ON operator_alert_ratings(alert_kind, alert_ref, rated_at);
 CREATE INDEX idx_dlm_ticker_date
     ON dealer_level_maps(ticker, session_date, provider_as_of);
 
