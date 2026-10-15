@@ -461,7 +461,7 @@ Percentile baseline (definitions):
   alert body carries "percentile baseline: fallback".
 
 Dealer confirmation:
-  D_c = max(GammaAlign, VannaAlign) in [0, 1].
+  D_c = (GammaAlign + VannaAlign) / 2 in [0, 1].   [C12: was max(), which biases upward]
 
 Price confirmation:
   P_c = 1 only after the activation level is crossed or
@@ -486,46 +486,34 @@ Gamma confirmation (structural only):
   rejections, or any price-derived quantity. Price
   confirmation is P_c in D.14b.
 
-  GammaAlign = 1 when a fresh, unexpired dealer-map level
-  exists with orientation consistent with the flow direction:
-    Bullish cluster:
-      a POSITIVE_GAMMA_SUPPORT exists below spot;
-      OR a POSITIVE_GAMMA_PIN exists above spot;
-      OR a NEGATIVE_GAMMA_ACCELERATOR exists above spot;
-      OR a confirmed structural gamma-flip state aligns
-      (dealer map only; not price-derived).
-    Bearish cluster: mirrored.
+  GammaAlign in {0, 0.5, 1} is derived ONLY from the current session's dealer map regime and levels   [C12: replaced]
+  (no price-derived input; price confirmation is P_c in D.14b). Bearish cluster mirrored.
+    GammaAlign = 0   when regime is UNINFORMATIVE or UNAVAILABLE, or sign_fragile, or the map is stale beyond
+                     ZERO_DTE_DEALER_MAP_FRESHNESS_S.
+    GammaAlign = 1   when regime = NEGATIVE and no POSITIVE_GAMMA level (support/resistance/pin) lies
+                     between spot and target.
+    GammaAlign = 0.5 when regime = POSITIVE and the target IS the nearest PIN/POSITIVE_GAMMA_RESISTANCE
+                     in the direction of travel (pull to pin, capped).
+    GammaAlign = 0   when a POSITIVE_GAMMA level lies between spot and target (wall blocks), or otherwise.
+  POSITIVE_GAMMA_SUPPORT below spot is used for invalidation only, not for alignment.
 
-  GammaAlign = 0.5 when dealer levels are present but not
-  unambiguously aligned.
-
-  GammaAlign = 0 when no fresh dealer-map level exists, or
-  the map contradicts the flow direction, or the map is
-  stale beyond ZERO_DTE_DEALER_MAP_FRESHNESS_S.
-
-  VannaAlign = 1 only when the sign of IV-movement-driven
-  dealer hedge flow (H_V_ADV, below) matches the flow
-  direction. IV-momentum only; no price reference.
+  VannaAlign = 1 only when the sign of IV-movement-driven dealer hedge flow H_V (below) matches the
+  flow direction, per the normalized rule below. IV-momentum only; no price reference.
 
   Separation rule: changing only price behavior cannot
   change GammaAlign or VannaAlign. Changing only dealer-map
   structure cannot change P_c.
 
-Vanna confirmation (normalized):
-
-  H_V = -Vanna_vol · ΔIV_vol
-
-  Normalize by dollar-volume denominator:
-    H_V_ADV = (-Vanna_vol · ΔIV_vol) / ADV_dollar_window
-    ADV_dollar_window = trailing average dollar volume over
-    the lane's lookback window (default same session's
-    trailing 20 sessions same-time bucket).
-
-  VannaAlign = 1 only when:
-    - sign(H_V) matches flow direction,
-    - |H_V_ADV| ≥ ZERO_DTE_VANNA_RELEVANCE_MIN (0.10),
-    - IV timestamps aligned with the event window.
-  Flat or missing IV → VannaAlign = 0 (context-only).
+Vanna confirmation (normalized)   [C12: corrected]
+  dIV_pts = ATM IV of the cluster's expiration now - ATM IV at the previous dealer-map refresh, measured with
+  the cluster's own event window EXCLUDED (breaks flow->IV->vanna circularity). Missing or misaligned
+  timestamps -> VannaAlign = 0.
+  H_V = -(NetVanna_$pervolpt * dIV_pts)        (dealer-signed; H_V > 0 = dealers buy)
+  H_V_ADV = H_V / ADV_dollar_window            (index options: front ES notional ADV)
+  VannaAlign = 1 only when sign(H_V) matches flow direction AND |H_V_ADV| >= theta_V, where theta_V = trailing
+  90th percentile of |H_V_ADV| for the lane (needs ZERO_DTE_PERCENTILE_MIN_DAYS sessions, else VannaAlign = 0).
+  ZERO_DTE_VANNA_RELEVANCE_MIN (0.10 = 10% of ADV) is DEPRECATED: likely unreachable for liquid underlyings.
+  Flat or missing IV -> VannaAlign = 0 (context-only).
 
 Confirmation buffer (all in _mills):
   S_mills       = round(S_micros / 1000)
@@ -682,20 +670,58 @@ D.19 Gamma Flip Alignment
 
 D.20 Level Persistence and Rollover
 
-D.21 Dealer Hedging Pressure (signed)
-  H_$ = -( gamma_flow_$per1pct × ΔS_pct
-         + vanna_flow_$pervolpt × ΔIV_volpt
-         + charm_flow_$perday × Δt_days )
-  H_signed    = H_$ / ADV_$
+D.21 Dealer Hedging Pressure (signed)   [C12: corrected]
+  Exposures MUST be DEALER-signed (formulas-dealer-greeks.md F3). H > 0 means dealers BUY the underlying.
+  dDelta_dealer_$ = NetGamma_$per1pct * dS_pct + NetVanna_$pervolpt * dIV_volpt + NetCharm_$perday * dt_days
+  H_$ = -dDelta_dealer_$
+  dS_pct is in PERCENT POINTS (1.0 = 1%), never a fraction.
+  0DTE: the charm term is EXCLUDED (linear dt invalid near expiry). >=1DTE: charm term allowed.
+  Large scenario moves: full reprice on the D.23 grid instead of the Taylor sum.
+  H_signed    = H_$ / ADV_$   (index options: front ES notional ADV; ADV missing -> H unavailable)
   H_magnitude = |H_signed|
-  If sign(H_signed) opposes thesis direction:
-    EV_lower -= HEDGE_PENALTY_DEFAULT × H_magnitude
+  If sign(H_signed) opposes thesis direction AND dealer_features_live = true:
+    EV_lower -= HEDGE_PENALTY_DEFAULT * H_magnitude
+  Default dealer_features_live = false (SHADOW: compute and log, no effect on grade or EV).
   Single application.
 
 D.22 Basis: canonical basis rule in SPEC Vol 3 §9.7.
 
 D.23 Derived Gamma Flip (Grid Repricing)
+  m_daily = IV/sqrt(252) per D.15 (0DTE: IV of the 0DTE ATM). N = FLIP_GRID_POINTS (odd); half = (N-1)/2;
+  h = FLIP_GRID_HALF_MULT * m_daily / half; grid S'_j = S*(1 + j*h), j = -half..+half.
+  At each S'_j reprice gamma with each option's own sigma_i and T fixed;
+  NetGamma_$(S') = sum over options of s_i * Gamma_i(S') * S'^2 * 0.01 * M * OI_i.
+  Flip = zero crossing nearest spot, linear interpolation between adjacent grid points of opposite sign;
+  none in range -> NO_FLIP. flip_distance_pct = (S_flip - S) / S.
+  Computed on map refresh only. See D.26.
 D.24 Call Wall / Put Wall
+  Call wall = argmax over K >= S of unsigned call Gamma_$ at K; Put wall = argmax over K <= S of unsigned put Gamma_$.
+  Signed level roles from Net_K = sum of dealer-signed Gamma_$ at strike K (see D.26.4).
+
+D.26 Greeks kernel, dealer sign and regime   [C12: new]
+D.26.1 Inputs/guards. T = (expiry_ts - as_of_ts)/(365*86_400_000) calendar years; T = max(T, DEALER_T_MIN_S/(365*86_400)).
+  sigma_i is the option's own IV; sigma_i <= GREEKS_SIGMA_MIN or > GREEKS_SIGMA_MAX, missing IV, T <= 0 or OI <= 0 -> option EXCLUDED
+  (counted in coverage, never defaulted).
+D.26.2 BSM with carry q: d1 = [ln(S/K) + (r - q + sigma^2/2)T] / (sigma*sqrt(T)); d2 = d1 - sigma*sqrt(T).
+  Gamma = exp(-qT) * n(d1) / (S*sigma*sqrt(T))            (n = pdf)
+  Vanna = dDelta/dsigma = -exp(-qT) * n(d1) * d2 / sigma   (same for call and put)
+  Charm = dDelta/dt (calendar) = -dDelta/dT:
+    core = -exp(-qT) * n(d1) * (2(r-q)T - d2*sigma*sqrt(T)) / (2*T*sigma*sqrt(T))
+    call = core + q*exp(-qT)*N(d1);  put = core - q*exp(-qT)*N(-d1)
+  Verified sign table (r=q=0): gamma > 0; vanna > 0 when d2 < 0; ITM call charm > 0, OTM call charm < 0; put charm = call charm.
+  CI: analytic vs central finite difference and vs py_vollib/QuantLib (< 0.5%) on 10 spots x 5 vols x 4 tenors.
+D.26.3 Dollar units (M = 100, OI in contracts, S in dollars):
+  Gamma_$per1pct = Gamma * S^2 * 0.01 * M * OI;  Vanna_$pervolpt = Vanna * 0.01 * S * M * OI;
+  Charm_$perday = (Charm/365) * S * M * OI;  Delta_$ = Delta * S * M * OI.
+D.26.4 Dealer sign and regime. dealer exposure_i = s_i * exposure_i. Models: A OI_NAIVE (dealer long calls +1, short
+  puts -1), B SIGNED_FLOW, C PROVIDER. Regime computed under two independent models; sign disagreement ->
+  sign_fragile -> UNINFORMATIVE. R = |sum Gamma_$| / sum |Gamma_$|. regime = POSITIVE if net > 0, NEGATIVE if net < 0,
+  UNINFORMATIVE if R < R_min (H.2), UNAVAILABLE if coverage < DEALER_COVERAGE_MIN. Levels: local max of Net_K >= LEVEL_THETA*max|Net_K|
+  -> POSITIVE_GAMMA_SUPPORT (below spot-b) / PIN (within +-b) / RESISTANCE (above spot+b); local min <= -LEVEL_THETA*max|Net_K|
+  -> NEGATIVE_GAMMA_ACCELERATOR; contiguous |Net_K| < LEVEL_EPS*max|Net_K| -> LOW_EXPOSURE_AIR_POCKET.
+D.26.5 Cadence. No minute-by-minute recompute: refresh on cache TTL or event; every output carries map age.
+  Events on refresh only: REGIME_CHANGE (sign(Net) changed), FLIP_DISAGREEMENT (|own - provider flip|/S > FLIP_TOL_MULT*m_daily).
+  0DTE maps built on prior-day OI are labelled provider-estimated/OI-stale; never HIGH on model A alone.
 
 D.25 FDI (Delta-Weighted)
 
@@ -785,11 +811,14 @@ H. CONFIDENCE PROPAGATION
 ================================================================================
 
 H.1 Stage Confidences.
-H.2 Dealer Confidence Function
-  c = 0.85 if index else 0.55
-  c *= min(total_oi / 50000, 1.0)
-  if days_to_event <= 3: c *= 0.6
-  c *= max(0.3, 1.0 − greeks_age_hours / 24.0)
+H.2 Dealer Confidence Function   [C12: replaced]
+  R = |NetGamma_$| / Sum|Gamma_$|   (net-to-gross, in [0,1])
+  R_min / R_full = DEALER_R_PCTL_MIN / DEALER_R_PCTL_FULL percentile of trailing R for (ticker, lane) over
+  ZERO_DTE_PERCENTILE_WINDOW_D sessions; fewer than ZERO_DTE_PERCENTILE_MIN_DAYS -> DEALER_R_MIN_FALLBACK /
+  DEALER_R_FULL_FALLBACK and the output is labelled "fallback".
+  c = clip((R - R_min) / (R_full - R_min), 0, 1) * coverage_oi_share * max(0, 1 - age_s / STALE_REF_S)
+  STALE_REF_S = ZERO_DTE_DEALER_MAP_STALE_MAX_S (0DTE) else DEALER_STALE_TTL_MULT * lane dealer_ttl_s.
+  coverage_oi_share = OI-weighted share of options with valid greeks; < DEALER_COVERAGE_MIN -> dealer map UNAVAILABLE.
 H.3 Latency Freshness (lane-parameterized)
   age_ms = now_ms − print_ts_ms
   F_s    = LANE_QUOTE_FRESHNESS_S[lane]
