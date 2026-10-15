@@ -116,6 +116,12 @@ SECTION 5 — CANONICAL EVENT & DEDUPLICATION
 5.2 Canonical Event (event-time NBBO preserved)
 5.3 Deduplication Fingerprint priority:
     exchange_execution_id → provider_event_id → content hash.
+
+    Content hash is SHA-256 over the RFC 8785 canonical JSON form
+    (SPEC Vol 1 §22.7) of the normalized economic fields. Provider
+    delivery metadata that varies between duplicate deliveries
+    (fetch timestamps, reception headers, session identifiers) is
+    excluded from the content-hash input.
 5.4 Cross-Provider Corroboration: one canonical event + many
     sources rows; never double-counts premium.
 5.5 Relationship Classes: INDEPENDENT_REPEATED_FLOW,
@@ -2152,7 +2158,7 @@ CREATE TABLE spx_crossing_state_history (
     spot_at_entry_micros BIGINT, close_price_micros BIGINT,
     confirmation_window_s INTEGER,
     confirmation_distance_mills BIGINT,
-    cooldown_until INTEGER, rearmed_at INTEGER,
+    cooldown_until BIGINT, rearmed_at BIGINT,
     invalidated_by_map_id TEXT, evidence_json TEXT,
     created_at BIGINT NOT NULL, PRIMARY KEY (state_id),
     CHECK(state != 'COOLDOWN'    OR cooldown_until        IS NOT NULL),

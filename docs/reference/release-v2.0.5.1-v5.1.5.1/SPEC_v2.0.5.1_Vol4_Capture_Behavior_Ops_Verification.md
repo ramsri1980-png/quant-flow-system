@@ -586,7 +586,7 @@ SECTION 20 — VERIFICATION & ACCEPTANCE
        SignedDirectionalImbalance = (B − R) / (B + R); its
        absolute value equals DirectionalStrength.
 
-20.72 canonical acceptance summary per §20.67.
+20.72 (Reserved. See §20.71 (0DTE cluster detection) and §20.73 (core correction acceptance) for the normative acceptance suite.)
 
 20.73 Core correction acceptance (C01–C06)
 

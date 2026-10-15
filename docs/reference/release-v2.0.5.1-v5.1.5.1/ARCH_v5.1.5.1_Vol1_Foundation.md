@@ -352,7 +352,8 @@ M.1 Nightly Backup Barrier
     6. Compute and verify SHA-256 for each copy.
     7. Reopen.
     8. Resume capture.
-    9. rclone copy to encrypted offsite.
+    9. rclone copy to encrypted offsite (rclone-crypt remote to B2 or R2).
+       MEGA is reserved for the LUKS header backup only.
    10. Log barrier duration.
 
   Success is silent. Failure always notifies.

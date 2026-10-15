@@ -580,11 +580,11 @@ SECTION 17 — T+1 OI VERIFICATION
   3. Persist to chain_snapshots.
   4. Run attribution.
   5. Mark DONE.
-17.5 Idempotency via two partial unique indexes:
-    UNIQUE(signal_id, signal_version, horizon)
-      WHERE position_id IS NULL
-    UNIQUE(signal_id, signal_version, position_id, horizon)
-      WHERE position_id IS NOT NULL
+17.5 Idempotency: enforced by PRIMARY KEY
+    (signal_id, signal_version, horizon, outcome_scope_id)
+    on signal_outcomes (SPEC Vol 2 §19.3). DuckDB does not
+    support partial unique indexes; the composite PK is the
+    canonical idempotency mechanism.
 17.6 Thesis Linkage: label update on flow_label.
 17.7 FDI Retrospective: retrospective only.
 
