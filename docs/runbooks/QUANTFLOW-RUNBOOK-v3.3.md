@@ -1116,7 +1116,7 @@ Alias in h~/.bashrc`:
 alias qfpush='git push && python3 scripts/update_runbook.py'
 ```
 
-### Pattern 2b -- Run after merging to master
+### Pattern 2b — Run after merging to master
 
 After any merge to master, CI pushes an `Update repo index` commit
 (`.github/workflows/repo-index.yml`). Your local master is then behind
