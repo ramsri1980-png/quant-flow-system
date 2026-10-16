@@ -1331,3 +1331,26 @@ Per-feature flow:
   4. Assistant writes the file via a one-shot Python heredoc:
      reads the target, skips if present, writes, git add, commit, push.
   5. Run /qf-propose @openspec/prompts/NNN-slug.md
+
+### Runbook auto-update - 2026-10-16T06:11:11Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+cbccc7e fix(005): close round-3 review MINORs + tidy update_runbook.py
+024716a fix(005): close review MAJORs and MINORs — wall-clock adapter ban, duration bound wording
+69602bc chore: opencode v2 permissions, tool routing, 005 design rulings
+b5f2262 docs: add HYBRID PROMPT RECIPE to runbook
+87d4b14 docs: runbook snapshot before feature 005
+fb2d477 docs: runbook auto-update after eval adoption
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+17eb0be docs: add Pattern 7 to runbook conventions
+28dfe5a docs: runbook v3.3 Session 3 post-close status
+607cf3e docs: add safe-update conventions + reusable runbook updater
+```
+
+Working tree:
+```
+(clean)
+```
