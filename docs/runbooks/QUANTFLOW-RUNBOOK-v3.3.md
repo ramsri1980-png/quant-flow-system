@@ -1354,3 +1354,26 @@ Working tree:
 ```
 (clean)
 ```
+
+### Runbook auto-update - 2026-10-16T06:21:53Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+be1588a docs: runbook auto-update after feature 005 review cycles
+cbccc7e fix(005): close round-3 review MINORs + tidy update_runbook.py
+024716a fix(005): close review MAJORs and MINORs — wall-clock adapter ban, duration bound wording
+69602bc chore: opencode v2 permissions, tool routing, 005 design rulings
+b5f2262 docs: add HYBRID PROMPT RECIPE to runbook
+87d4b14 docs: runbook snapshot before feature 005
+fb2d477 docs: runbook auto-update after eval adoption
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+```
+
+Working tree:
+```
+(clean)
+```
