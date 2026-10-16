@@ -188,6 +188,19 @@ DDL = """CREATE TABLE dealer_map_regime (
 CREATE INDEX idx_dealer_map_regime_regime ON dealer_map_regime(regime, created_at);
 """
 
+DDL52 = """CREATE TABLE operator_alert_ratings (
+    rating_id TEXT PRIMARY KEY,
+    alert_kind TEXT NOT NULL CHECK(alert_kind IN ('FLOW_ALERT','ZERO_DTE_CLUSTER','MORNING_BRIEF','AD_HOC')),
+    alert_ref TEXT NOT NULL,
+    rating TEXT NOT NULL CHECK(rating IN ('USEFUL','NOT_USEFUL','UNSURE')),
+    reason_code TEXT,
+    note TEXT,
+    audit_id BIGINT NOT NULL,
+    rated_at BIGINT NOT NULL
+);
+CREATE INDEX idx_oar_alert ON operator_alert_ratings(alert_kind, alert_ref, rated_at);
+"""
+
 def patch_spec_v2(t):
     r = []
     if "CREATE TABLE dealer_map_regime" in t: r.append(("DDL dealer_map_regime", "already"))
@@ -199,15 +212,26 @@ def patch_spec_v2(t):
             k = j + len("\n);\n")
             t = t[:k] + "\n-- dealer_map_regime (DuckDB 051, PROPOSED CORE; C12; 1:1 child of dealer_level_maps, append-only)\n" + DDL + t[k:]
             r.append(("DDL dealer_map_regime", "ok"))
+    if "CREATE TABLE operator_alert_ratings" in t: r.append(("DDL operator_alert_ratings", "already"))
+    else:
+        m = "CREATE INDEX idx_dealer_map_regime_regime ON dealer_map_regime(regime, created_at);\n"
+        i = t.find(m)
+        if i < 0: r.append(("DDL operator_alert_ratings", "NOT FOUND"))
+        else:
+            k = i + len(m)
+            t = t[:k] + "\n-- operator_alert_ratings (DuckDB 052, PROPOSED CORE; evaluation; append-only; written by quantd via quantctl rate)\n" + DDL52 + t[k:]
+            r.append(("DDL operator_alert_ratings", "ok"))
     t, st = line(t, "market_map_snapshots and dealer_level_maps append-only.",
-                 "market_map_snapshots, dealer_level_maps and dealer_map_regime append-only.", "dealer_map_regime append-only"); r.append(("append-only list", st))
+                 "market_map_snapshots, dealer_level_maps, dealer_map_regime append-only (operator_alert_ratings too).", "dealer_map_regime append-only"); r.append(("append-only list", st))
     return t, r
 
 def patch_arch_v2(t):
     r = []
     t, st = line(t, "        -- Depends on core 040 and 042, NOT on research 043-045.",
         "        -- Depends on core 040 and 042, NOT on research 043-045.\n    051_dealer_map_regime.sql            (PROPOSED CORE, C12)\n        -- dealer_map_regime: 1:1 append-only child of dealer_level_maps (regime, net/gross, sign_fragile).\n        -- Depends on baseline dealer_level_maps only; NOT on 050 or research 043-045.", "051_dealer_map_regime.sql"); r.append(("migration list 051", st))
-    t, st = line(t, "DuckDB 042 then 050. Reserved", "DuckDB 042, 050, then 051. Reserved", "042, 050, then 051"); r.append(("fresh order", st))
+    t, st = line(t, "DuckDB 042, 050, then 051. Reserved", "DuckDB 042, 050, 051, then 052. Reserved", "050, 051, then 052"); r.append(("fresh order", st))
+    t, st = line(t, "        -- Depends on baseline dealer_level_maps only; NOT on 050 or research 043-045.",
+        "        -- Depends on baseline dealer_level_maps only; NOT on 050 or research 043-045.\n    052_operator_alert_ratings.sql       (PROPOSED CORE, evaluation)\n        -- operator_alert_ratings: append-only operator feedback written via quantctl rate.", "052_operator_alert_ratings.sql"); r.append(("migration list 052", st))
     return t, r
 
 TARGETS = [("Vol2_Data_Canonical", patch_spec_v2), ("ARCH.*Vol2_DataModel", patch_arch_v2), ("Vol4_Services", patch_v4), ("ARCH*Vol1_Foundation", patch_v1_arch), ("SPEC*Vol1_Foundations", patch_v1_spec)]

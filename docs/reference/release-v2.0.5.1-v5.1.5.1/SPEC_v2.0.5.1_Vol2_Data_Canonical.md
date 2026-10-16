@@ -116,6 +116,12 @@ SECTION 5 — CANONICAL EVENT & DEDUPLICATION
 5.2 Canonical Event (event-time NBBO preserved)
 5.3 Deduplication Fingerprint priority:
     exchange_execution_id → provider_event_id → content hash.
+
+    Content hash is SHA-256 over the RFC 8785 canonical JSON form
+    (SPEC Vol 1 §22.7) of the normalized economic fields. Provider
+    delivery metadata that varies between duplicate deliveries
+    (fetch timestamps, reception headers, session identifiers) is
+    excluded from the content-hash input.
 5.4 Cross-Provider Corroboration: one canonical event + many
     sources rows; never double-counts premium.
 5.5 Relationship Classes: INDEPENDENT_REPEATED_FLOW,
@@ -2061,6 +2067,19 @@ CREATE TABLE dealer_map_regime (
     created_at BIGINT NOT NULL
 );
 CREATE INDEX idx_dealer_map_regime_regime ON dealer_map_regime(regime, created_at);
+
+-- operator_alert_ratings (DuckDB 052, PROPOSED CORE; evaluation; append-only; written by quantd via quantctl rate)
+CREATE TABLE operator_alert_ratings (
+    rating_id TEXT PRIMARY KEY,
+    alert_kind TEXT NOT NULL CHECK(alert_kind IN ('FLOW_ALERT','ZERO_DTE_CLUSTER','MORNING_BRIEF','AD_HOC')),
+    alert_ref TEXT NOT NULL,
+    rating TEXT NOT NULL CHECK(rating IN ('USEFUL','NOT_USEFUL','UNSURE')),
+    reason_code TEXT,
+    note TEXT,
+    audit_id BIGINT NOT NULL,
+    rated_at BIGINT NOT NULL
+);
+CREATE INDEX idx_oar_alert ON operator_alert_ratings(alert_kind, alert_ref, rated_at);
 CREATE INDEX idx_dlm_ticker_date
     ON dealer_level_maps(ticker, session_date, provider_as_of);
 
@@ -2152,7 +2171,7 @@ CREATE TABLE spx_crossing_state_history (
     spot_at_entry_micros BIGINT, close_price_micros BIGINT,
     confirmation_window_s INTEGER,
     confirmation_distance_mills BIGINT,
-    cooldown_until INTEGER, rearmed_at INTEGER,
+    cooldown_until BIGINT, rearmed_at BIGINT,
     invalidated_by_map_id TEXT, evidence_json TEXT,
     created_at BIGINT NOT NULL, PRIMARY KEY (state_id),
     CHECK(state != 'COOLDOWN'    OR cooldown_until        IS NOT NULL),

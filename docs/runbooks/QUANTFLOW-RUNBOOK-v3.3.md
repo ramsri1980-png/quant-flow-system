@@ -1070,3 +1070,310 @@ git push -u origin <branch>
 
 # Fetch + rebase before starting work
 git fetch origin && git rebase origin/master
+---
+
+## CONVENTIONS — SAFE DOCUMENT UPDATES (2026-10-15)
+
+Rule: never use nano, cat >> with heredocs, or manual copy-paste to modify files under docs/reference/, docs/runbooks/, 
+docs/architecture/adr/, or openspec/. Use anchored Python scripts or file-based cat/cp to modify files. Heredocs collide
+with EOF-like strings, pasted prompt lines corrupt bash state, and manual edits lose determinism.
+### Pattern 1 — Append a section (idempotent, anchored)
+
+```python
+from pathlib import Path
+p = Path("path/to/doc.md")
+text = p.read_text()
+if "## New Section Title" in text:
+    print("already present")
+else:
+    insert = "\n\n## New Section Title\n\n...content...\n"
+    idx = text.rfind("\nEND OF")
+    text = text[:idx] + insert + text[idx:]
+    p.write_text(text)
+```
+
+### Pattern 2 — Run after every `git push`
+
+```bash
+python3 scripts/update_runbook.py
+```
+
+Updates the runbook with current branch, last 10 commits, working tree status, and UTC timestamp. Idempotent.
+
+Alias in h~/.bashrc`:
+
+```bash
+alias qfpush='git push && python3 scripts/update_runbook.py'
+```
+
+### Pattern 3 — Regenerate SHA256SUMS after errata
+
+```bash
+cd docs/reference/release-v2.0.5.1-v5.1.5.1
+sha256sum *.md > SHA256SUMS
+sha256sum -c SHA256SUMS
+```
+
+### Pattern 4 — Verify frozen layer
+
+```bash
+git show 2ce33ea:docs/reference/release-v2.0.5.1-v5.1.5.1/ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md | sha256sum
+```
+
+Expected: `2d7a90e533196af61745bc4efd3259b7b64b519b8ec78662392b50a911285e23`
+
+### Pattern 5 — Pre-commit verification
+
+```bash
+git diff 2ce33ea..HEAD -- docs/reference/release-v2.0.5.1-v5.1.5.1/ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md | head
+(cd docs/reference/release-v2.0.5.1-v5.1.5.1 && sha256sum -c SHA256SUMS)
+pgrep -af 'nano|python3' || true
+```
+
+### Pattern 6 — Pitfalls to avoid
+
+| Pitfall | Cause | Prevention |
+|---|---|---|
+| `>` prompt stuck | Heredoc never terminated | Always paste full blocks; never interrupt `<<EOF` |
+| `bash: sriram@...: No such file` | Pasted prompt lines as commands | Never copy the `sriram@...$` prefix |
+| `syntax error near unexpected token` | Pasted `<branch>` placeholder | Use real values or quote |
+| Lost runbook content | Overwrote with partial `cat >` | Always use `cat >>` from a file, or Python anchor insert |
+| MANIFEST drift | Manual SHA256SUMS edit | Always regenerate with `sha256sum *.md` |
+| Python triple-quote corrupted | Triple-quoted strings inside heredoc | Write content to /tmp/file with nano, install with `cp` or `cat >>` |
+
+### Runbook auto-update - 2026-10-15T20:56:49Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+0659c05 docs: add frozen-layer audit pointer to ADR-001
+5db02f0 spec+prompt: errata (C5/C6/C9, RFC 8785, dedup, backup) + ADR-001 amendment + anti-detection brief repairs
+f3ac486 merge: C12 kit + OpenCode setup + runbook GitHub remote
+6d9063b docs: record GitHub remote in runbook
+1eca93e opencode: merge C12 kit at repo root
+6207b98 docs: C12 dealer/greeks corrections, DuckDB 051 dealer_map_regime
+c877019 docs: resolve C1 (bundle version) and C8 (column type rule)
+3c645e7 prompt(005): add ChatGPT process rigor block — RESOLVED/PROPOSED/BLOCKED taxonomy, one-question-at-a-time, no silent adoption
+532b5c2 docs: runbook v3.3 - Session 3 complete, gotchas recorded, full feature detail preserved
+56a6d22 chore(session3): zero-token OpenCode+OpenSpec setup
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+?? scripts/update_runbook.py
+```
+
+
+## SESSION 3 POST-CLOSE -- 2026-10-15
+
+Beyond the original Session 3 scope:
+
+- ADR-001 amended: source-scope only; ARCH Vol 3 E/F apply in full to authorized sources
+- Spec errata applied: C5 (17.5), C6 (20.72), C9 (DuckDB BIGINT), RFC 8785 22.7,
+  dedup 5.3, backup M.1
+- Anti-detection audit: ARCH Vol 3 E/F byte-identical to freeze
+  (hash 2d7a90e533196af61745bc4efd3259b7b64b519b8ec78662392b50a911285e23)
+- Feature briefs 050, 052, 064 repaired (Claude had silently weakened E/F coverage)
+- Claude's "drop schedule jitter" and "exclude mimicry/fingerprint" rejected
+- Safe-update conventions + scripts/update_runbook.py + qfpush alias added
+- Evaluation framework reviewed 2026-10-15: additive, no anti-detection impact
+  (see STEPS-EVAL.md, migration DuckDB 052, brief 041b, 4 new observability categories)
+- Ready for Feature 005: /qf-propose @openspec/prompts/005-domain-types-units-clock.md
+
+
+
+### Pattern 7 -- One-shot Python heredoc for edits + commit + push
+
+Canonical pattern for every doc change. No nano, no /tmp file, no base64.
+
+Shape: one bash command, one Python heredoc, unique delimiter.
+
+    cd ~/src/quant-flow-system
+
+    python3 <<'ENDOFSCRIPT'
+    from pathlib import Path
+    import subprocess
+    REPO = Path.home() / "src" / "quant-flow-system"
+    TARGET = REPO / "docs" / "runbooks" / "SOME-FILE.md"
+    BLOCK = '''
+    ## New Section
+    content
+    '''
+    # 1. read utf-8, abort on null bytes
+    # 2. skip if section already present
+    # 3. append at marker or EOF
+    # 4. write utf-8
+    # 5. git add + commit + push current branch
+    print("DONE")
+    ENDOFSCRIPT
+
+Rules:
+- ASCII-only content in BLOCK. Use -- not em-dash. Use E/F not the section-sign.
+- Unique delimiter. Never repeat a delimiter string inside the content.
+- Do not nest heredocs. If the content needs to show a heredoc, show it indented
+  in prose, not as a live example -- this is why Pattern 7 exists.
+- Self-verify: read_text(encoding="utf-8") catches decode errors; null byte check
+  catches binary corruption before write.
+- Idempotent: check if section title already in text, skip if present.
+- One transaction: read, verify, write, add, commit, push all inside the script.
+
+Banned for doc edits: nano, cat >> with heredocs, base64 -d, triple-quoted
+strings inside an outer heredoc. Each failed at least once in Session 3.
+
+### Runbook auto-update - 2026-10-15T21:13:54Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+17eb0be docs: add Pattern 7 to runbook conventions
+28dfe5a docs: runbook v3.3 Session 3 post-close status
+607cf3e docs: add safe-update conventions + reusable runbook updater
+0659c05 docs: add frozen-layer audit pointer to ADR-001
+5db02f0 spec+prompt: errata (C5/C6/C9, RFC 8785, dedup, backup) + ADR-001 amendment + anti-detection brief repairs
+f3ac486 merge: C12 kit + OpenCode setup + runbook GitHub remote
+6d9063b docs: record GitHub remote in runbook
+1eca93e opencode: merge C12 kit at repo root
+6207b98 docs: C12 dealer/greeks corrections, DuckDB 051 dealer_map_regime
+```
+
+Working tree:
+```
+(clean)
+```
+
+### Runbook auto-update - 2026-10-15T21:17:33Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+fb2d477 docs: runbook auto-update after eval adoption
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+17eb0be docs: add Pattern 7 to runbook conventions
+28dfe5a docs: runbook v3.3 Session 3 post-close status
+607cf3e docs: add safe-update conventions + reusable runbook updater
+0659c05 docs: add frozen-layer audit pointer to ADR-001
+5db02f0 spec+prompt: errata (C5/C6/C9, RFC 8785, dedup, backup) + ADR-001 amendment + anti-detection brief repairs
+f3ac486 merge: C12 kit + OpenCode setup + runbook GitHub remote
+6d9063b docs: record GitHub remote in runbook
+1eca93e opencode: merge C12 kit at repo root
+```
+
+Working tree:
+```
+(clean)
+```
+
+
+## HYBRID PROMPT RECIPE -- feature spec workflow
+
+Purpose: for every future feature NNN, produce ONE file at
+openspec/prompts/NNN-slug.md that combines three inputs.
+
+Inputs:
+1. ChatGPT prompt  -- process discipline. Yields the Process block:
+   RESOLVED_FROM_SOURCE / PROPOSED / BLOCKED taxonomy,
+   one-question-at-a-time, no-silent-adoption of thresholds /
+   notifications / schema amendments, exact inputs-units-IDs-store-
+   ownership, map each requirement to a source, check repo state
+   not only plans.
+2. Claude prompt   -- feature content. Yields header (Epic, Depends,
+   Blockers, Capabilities), Sources list with SPEC/ARCH section
+   citations, numbered Requirements, Seed scenarios, Open questions
+   (do-not-invent), Out of scope.
+3. Assistant review -- cross-check against the frozen design bundle.
+   Confirms every cited section exists in docs/reference/CURRENT.
+   Flags C-items and RQ-items. Audits anti-detection impact.
+
+Output order:
+  # NNN Feature title
+  Epic | Depends | Blockers
+  Use: /qf-propose @openspec/prompts/NNN-slug.md
+  Capabilities: ...
+  Sources: SPEC Vn section, ...; ARCH Vn section, ...; runbook Task N
+
+  ## Process
+  (from ChatGPT, 6 bullets)
+
+  Requirements:
+  1. ... (maps to source)
+  2. ...
+
+  Seed scenarios: ...
+  Open questions (do not invent): ...
+  Out of scope: ...
+
+Rules:
+- ASCII-only in the file. Use -- not em-dash. Use E/F not the section-sign.
+- Every Sources citation must be grep-able in the current design bundle.
+  An unverifiable citation -> mark that requirement BLOCKED.
+- [P] values (proposed thresholds, sample sizes, horizons) require
+  explicit operator approval before /qf-apply. Never silently adopted.
+- Anti-detection gate: any feature that touches ARCH Vol 3 E or F, or
+  SPEC Vol 4 section 11, must be reviewed by the assistant before
+  commit. Frozen-layer diff (git diff 2ce33ea..HEAD on
+  ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md) must be empty.
+  Any reviewer proposal to weaken (drop jitter, exclude mimicry, weaken
+  a challenge rule, remove rate limits) is rejected and recorded in
+  openspec/conflicts-and-gaps.md under ## Rejected.
+- Installation: one-shot Python heredoc (Pattern 7). No nano, no
+  cat >> with heredoc, no base64.
+
+Per-feature flow:
+  1. Operator supplies ChatGPT prompt + Claude prompt.
+  2. Assistant reads both, drafts hybrid, checks every citation,
+     audits anti-detection, drafts in-memory.
+  3. Operator approves.
+  4. Assistant writes the file via a one-shot Python heredoc:
+     reads the target, skips if present, writes, git add, commit, push.
+  5. Run /qf-propose @openspec/prompts/NNN-slug.md
+
+### Runbook auto-update - 2026-10-16T06:11:11Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+cbccc7e fix(005): close round-3 review MINORs + tidy update_runbook.py
+024716a fix(005): close review MAJORs and MINORs — wall-clock adapter ban, duration bound wording
+69602bc chore: opencode v2 permissions, tool routing, 005 design rulings
+b5f2262 docs: add HYBRID PROMPT RECIPE to runbook
+87d4b14 docs: runbook snapshot before feature 005
+fb2d477 docs: runbook auto-update after eval adoption
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+17eb0be docs: add Pattern 7 to runbook conventions
+28dfe5a docs: runbook v3.3 Session 3 post-close status
+607cf3e docs: add safe-update conventions + reusable runbook updater
+```
+
+Working tree:
+```
+(clean)
+```
+
+### Runbook auto-update - 2026-10-16T06:21:53Z
+
+Branch: `feature/005-domain-types-units-clock`
+
+Recent commits:
+```
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+be1588a docs: runbook auto-update after feature 005 review cycles
+cbccc7e fix(005): close round-3 review MINORs + tidy update_runbook.py
+024716a fix(005): close review MAJORs and MINORs — wall-clock adapter ban, duration bound wording
+69602bc chore: opencode v2 permissions, tool routing, 005 design rulings
+b5f2262 docs: add HYBRID PROMPT RECIPE to runbook
+87d4b14 docs: runbook snapshot before feature 005
+fb2d477 docs: runbook auto-update after eval adoption
+2b24b5c eval: adopt pre-registered evaluation framework (docs+DDL)
+```
+
+Working tree:
+```
+(clean)
+```

@@ -1517,5 +1517,27 @@ SECTION 22 — APPENDIX
   weaken it. The acceptance suite may only grow.
 
 ================================================================================
+22.7 Canonical JSON and Hashing
+================================================================================
+
+  Canonical JSON serialization follows RFC 8785 (JSON Canonicalization
+  Scheme). All hashes over JSON object inputs use SHA-256 on the RFC 8785
+  canonical form unless a section explicitly declares otherwise.
+
+  Applies to (non-exhaustive):
+    - canonical_fingerprint content hash (SPEC Vol 2 §5.3)
+    - fdi_snapshot_id, cot_snapshot_id, analytics_id, observation_id
+      (SPEC Vol 7)
+    - interval_id, evaluation_id, episode_id
+      (ARCH Vol 4 §D.14d, §AH.6.3)
+    - input_manifest_hash on any analytical snapshot
+
+  CANONICAL_TRACE_NAMESPACE is a fixed UUIDv5 constant, generated once
+  during initial setup and committed to the repository. Trace IDs are
+  uuid5(CANONICAL_TRACE_NAMESPACE, canonical_event_id) per SPEC Vol 5
+  §O.6.1.
+
+
+================================================================================
 END OF SPEC Vol 1 v2.0.5.1
 ================================================================================

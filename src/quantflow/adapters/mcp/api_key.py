@@ -1,4 +1,5 @@
 """X-Api-Key gate. Wraps any ASGI app."""
+
 from __future__ import annotations
 
 import hmac

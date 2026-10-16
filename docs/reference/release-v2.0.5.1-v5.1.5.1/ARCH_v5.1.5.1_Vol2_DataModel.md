@@ -854,6 +854,8 @@ migrations/
     051_dealer_map_regime.sql            (PROPOSED CORE, C12)
         -- dealer_map_regime: 1:1 append-only child of dealer_level_maps (regime, net/gross, sign_fragile).
         -- Depends on baseline dealer_level_maps only; NOT on 050 or research 043-045.
+    052_operator_alert_ratings.sql       (PROPOSED CORE, evaluation)
+        -- operator_alert_ratings: append-only operator feedback written via quantctl rate.
 
 Forward-only. Never edit an applied migration.
 
@@ -873,7 +875,7 @@ Migration runner contract:
 
   Fresh: apply 000 once, record covered IDs, then apply enabled pending
   core migrations in dependency order: SQLite 070 then 071;
-  DuckDB 042, 050, then 051. Reserved AE/AF/AG numbers are NOT automatically
+  DuckDB 042, 050, 051, then 052. Reserved AE/AF/AG numbers are NOT automatically
   applied or marked covered because their number is lower than 050.
 
   Upgrade: never replay 000. Compute

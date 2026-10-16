@@ -7,11 +7,20 @@ Do not edit by hand. Regenerate after each feature merge:
 python3 scripts/gen_modules_index.py
 ```
 
-Used by `/qf-propose` and `/qf-apply` to enforce reuse-first.
+Used by `/opsx-propose` and `/opsx-apply` to enforce reuse-first.
 
 ## Python modules (`src/quantflow/`)
 
-- (none yet — src/quantflow/ is empty)
+- quantflow.adapters.clock
+- quantflow.adapters.mcp.api_key
+- quantflow.adapters.mcp.server
+- quantflow.cli.mcp_probe
+- quantflow.domain.constants
+- quantflow.domain.enums
+- quantflow.domain.errors
+- quantflow.domain.time
+- quantflow.domain.units
+- quantflow.ports.clock
 
 ## OpenSpec capabilities (`openspec/specs/`)
 

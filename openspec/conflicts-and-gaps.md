@@ -27,3 +27,33 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - canonical JSON hashing rules, CANONICAL_TRACE_NAMESPACE value, content-hash composition for dedup: unspecified.
 - Offsite backup target: ARCH V1 says rclone crypt → B2/R2; runbook uses MEGA for the LUKS header only.
 - Provider payload schemas and raw_color → normalized_meaning mapping tables: need fixtures.
+
+
+## Resolved (2026-10-15)
+
+- **C1** — bundle frozen at v2.0.5.1 / v5.1.5.1 (11 files). Runbook Task 5 updated. Closed 2026-10-15.
+- **C2** — SpecKit retired. OpenSpec flow lives in `openspec/config.yaml` + `openspec/constitution.md`. Closed 2026-10-15.
+- **C3** — SPEC Vol 6 F.3 wins (per-scope, no pooling). Decision recorded; closing finalises with feature 084.
+- **C4** — one-shot re-emit confirmed per SPEC Vol 5 §O.7.4. Decision recorded; closing finalises with feature 071.
+- **C5** — DDL wins; SPEC Vol 3 §17.5 rewritten to match `signal_outcomes` PK. Closed 2026-10-15.
+- **C6** — SPEC Vol 4 §20.72 pointer to reserved §20.67 removed. Closed 2026-10-15.
+- **C8** — SPEC Vol 2 §19.4.4 is canonical (DDL home). SQLite INTEGER (64-bit); DuckDB `_cents/_mills/_micros` in decision path declared BIGINT. SPEC Vol 1 §19.4.4's "all BIGINT" is a summary. Closed 2026-10-15.
+- **C9** — DuckDB `spx_crossing_state_history.cooldown_until` and `rearmed_at` changed to BIGINT. Closed 2026-10-15.
+- **C11** — ADR-001 amended with source-scope-only clarification. §E/§F apply in full to authorized sources. Closed 2026-10-15.
+- **RQ-002** — `signal_valid` ordering confirmed present in SPEC Vol 3 §8.1a/§8.4 (7 occurrences). Closed 2026-10-15.
+- **RQ-004** — grade/state/episode split confirmed present in SPEC Vol 2 §19.2 (`episode_state`, 4 occurrences). Closed 2026-10-15.
+- **RQ-005** — `package_quote_current.package_quote_id` confirmed cache-only, never in decision evidence (SPEC Vol 2 §19.6 invariant AM). Closed 2026-10-15.
+- **RQ-006** (feature 005) — Rounding for unit conversions: integer-only with round-half-even at the display boundary; no fractional dollars in the decision path. Operator ruling 2026-10-15. Closed 2026-10-15.
+- **RQ-007** (feature 005) — DurationMs bound: BIGINT/64-bit parity with a validated maximum `DURATION_MS_MAX = 2**31 - 1` in code (structural value bound — the Rule 2 column-safe bound — enforced at construction; the type stays 64-bit, i.e. no int32 *type* bound); the PROPOSED int32 bound is rejected. Operator ruling 2026-10-15. Closed 2026-10-15.
+
+## Still open (deferred to relevant feature)
+
+- **C7** — cosmetic invariant label collision with ARCH §AH/§AI. Deferred; no functional impact until both referenced together.
+- **C10** — baseline manifest. Belongs to feature 010 per ARCH Vol 2 §C.3.
+- **C12** — dealer/greeks formulas. Adopted from `openspec/formulas-dealer-greeks.md`; final validation lands with features 031/033/034/035/036.
+- **RQ-008** (feature 005) — AI.1/AI.2 named constants (BASE_RISK_PCT, PREMIUM_STOP_PCT, THETA_BUDGET_PCT, TIME_STOP_DAYS, VOLATILITY_EXIT_IVR) have no home in `domain/constants.py`: the 005 spec delta scopes generation to ARCH Vol 1 §AI.3 only (parser anchored on the last `^AI.3` header so changelog mentions cannot shift it). A feature that needs an AI.1/AI.2 constant must extend `scripts/gen_constants.py` deliberately. NON-BLOCKING.
+
+## Rejected
+
+- **"Drop schedule jitter for provider access"** — violates ARCH Vol 3 §F.0.1a ("may only be strengthened"). Rejected 2026-10-15.
+- **"Exclude interaction emulation / mimicry / fingerprint"** — violates §F.A, §F.B, §F.H, §F.P. Rejected 2026-10-15.
