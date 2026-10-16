@@ -43,6 +43,8 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - **RQ-002** — `signal_valid` ordering confirmed present in SPEC Vol 3 §8.1a/§8.4 (7 occurrences). Closed 2026-10-15.
 - **RQ-004** — grade/state/episode split confirmed present in SPEC Vol 2 §19.2 (`episode_state`, 4 occurrences). Closed 2026-10-15.
 - **RQ-005** — `package_quote_current.package_quote_id` confirmed cache-only, never in decision evidence (SPEC Vol 2 §19.6 invariant AM). Closed 2026-10-15.
+- **RQ-006** (feature 005) — Rounding for unit conversions: integer-only with round-half-even at the display boundary; no fractional dollars in the decision path. Operator ruling 2026-10-15. Closed 2026-10-15.
+- **RQ-007** (feature 005) — DurationMs bound: BIGINT/64-bit parity with a validated maximum `DURATION_MS_MAX` in code; the PROPOSED int32 bound is rejected. Operator ruling 2026-10-15. Closed 2026-10-15.
 
 ## Still open (deferred to relevant feature)
 

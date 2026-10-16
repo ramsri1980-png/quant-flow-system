@@ -1,68 +1,266 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "tools": { "skill": false },
-  "permission": { "skill": "deny" },
-  "agent": {
+  "permissions": [
+    {
+      "action": "skill",
+      "resource": "*",
+      "effect": "deny"
+    }
+  ],
+  "agents": {
     "qf-plan": {
-      "description": "Spec author. Reads source; writes openspec files only.",
-      "tools": {
-        "read": true,
-        "glob": true,
-        "grep": true,
-        "write": true,
-        "edit": true,
-        "task": false,
-        "bash": false,
-        "webfetch": false,
-        "websearch": false
-      },
-      "permission": {
-        "edit": { "openspec/**": "allow", "*": "ask" }
-      }
+      "description": "QuantFlow spec author. Reads design inputs, writes proposal/specs/design/tasks.",
+      "steps": 20,
+      "permissions": [
+        {
+          "action": "*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "glob",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "grep",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "read",
+          "resource": "*.env",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*.env.*",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*.env.example",
+          "effect": "allow"
+        },
+        {
+          "action": "edit",
+          "resource": "*openspec/*",
+          "effect": "allow"
+        },
+        {
+          "action": "shell",
+          "resource": "openspec *",
+          "effect": "allow"
+        },
+        {
+          "action": "question",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "execute",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_get_repo_skeleton",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_rip_file_lines",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_find_dependent_references",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_apply_search_replace",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "harness-tools_execute_and_capture",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
     "qf-build": {
       "description": "Implementer. Writes code and tests; runs ruff, mypy, pytest.",
-      "tools": {
-        "read": true,
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "glob": true,
-        "grep": true,
-        "todowrite": true,
-        "todoread": true,
-        "task": false,
-        "webfetch": false,
-        "websearch": false
-      }
+      "steps": 30,
+      "permissions": [
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "webfetch",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "websearch",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "harness*_execute_and_capture",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
     "qf-review": {
       "description": "Read-only reviewer. Produces findings; never edits.",
-      "tools": {
-        "read": true,
-        "glob": true,
-        "grep": true,
-        "write": false,
-        "edit": false,
-        "bash": false,
-        "task": false,
-        "webfetch": false,
-        "websearch": false
-      }
+      "steps": 15,
+      "permissions": [
+        {
+          "action": "*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "glob",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "grep",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "read",
+          "resource": "*.env",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*.env.*",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*.env.example",
+          "effect": "allow"
+        },
+        {
+          "action": "execute",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_get_repo_skeleton",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_rip_file_lines",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_find_dependent_references",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_apply_search_replace",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "harness-tools_execute_and_capture",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
     "qf-doubt": {
       "description": "Read-only adversarial review in isolation.",
-      "tools": {
-        "read": true,
-        "glob": true,
-        "grep": true,
-        "write": false,
-        "edit": false,
-        "bash": false,
-        "task": false,
-        "webfetch": false,
-        "websearch": false
-      }
+      "steps": 10,
+      "permissions": [
+        {
+          "action": "*",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "glob",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "grep",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "read",
+          "resource": "*.env",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*.env.*",
+          "effect": "deny"
+        },
+        {
+          "action": "read",
+          "resource": "*.env.example",
+          "effect": "allow"
+        },
+        {
+          "action": "execute",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_get_repo_skeleton",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_rip_file_lines",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_find_dependent_references",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "harness-tools_apply_search_replace",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "harness-tools_execute_and_capture",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     }
   }
 }
