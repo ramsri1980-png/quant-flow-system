@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-16T21:06:37Z)
+## CURRENT STATE (auto 2026-10-16T21:12:24Z)
 
 | Item | Status |
 |---|---|
@@ -23,7 +23,7 @@
 | Repo | branch `master` |
 | Working tree | clean |
 | Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `1a7b0a4 Update repo index` |
+| Last commit | `96a1c44 Update repo index` |
 
 **Next action:** Continue active change: 005b-domain-fail-closed
 
@@ -1622,6 +1622,29 @@ bcc3061 merge: feature 005b complete
 64b82f9 docs(005b): manual propose artifacts — proposal, design, tasks, deltas
 7ae1373 docs(005b): tighten propose-phase scope + clean stray change dirs
 e784408 Update repo index
+```
+
+Working tree:
+```
+(clean)
+```
+
+### Runbook auto-update - 2026-10-16T21:12:24Z
+
+Branch: `master`
+
+Recent commits:
+```
+96a1c44 Update repo index
+fc7a6a8 docs(005d): record decisions for Q2, Q11, Q14, Q15, Q16 and freeze pocs/interface
+46f995c docs: runbook auto-update after feature 005b merge
+1a7b0a4 Update repo index
+4f5faeb fix(runbook): handle dict-shaped openspec list --json output
+941dfbf archive(005b): sync specs — domain-constants added, epoch-clock modified
+d37d37f Update repo index
+bcc3061 merge: feature 005b complete
+0792a0e feat(005b): domain fail-closed hardening — Q6, Q8, Q12, Q13
+246a329 fix(005b): close aliased-import evasion in constants AST guard
 ```
 
 Working tree:
