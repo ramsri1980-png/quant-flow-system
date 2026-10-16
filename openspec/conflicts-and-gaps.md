@@ -38,7 +38,7 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - **Q6** — Enforcing approval-pending. Nothing stops a kernel from using a pending constant. Option: an accessor that raises unless approved, or a lint test.
 - **Q7** — Structural constants location. `INT64_MIN/MAX`, `MICROS_PER_MILL`, `DURATION_MS_MAX` and the suffix tuples live in `units.py`/`time.py`, not `constants.py` (AGENTS rule 8). Confirm they are exempt, and check what `scripts/check_constants.py` covers.
 - **Q8** — Plausible epoch range. `epoch_ms` accepts any int64, so seconds (~1.7e9) or microseconds pass silently. Operator must supply min/max bounds.
-- **Q9** — `DURATION_MS_MAX = 2**31-1` is about 24.86 days; an `age_ms` over that fails construction. Confirm intended.
+- **Q9** — `DURATION_MS_MAX = 2**31-1` (~24.86 days). **RESOLVED — no conflict.** SPEC Vol 4 §18.14 lists cooldown values in SECONDS (behavioral-drift = 2592000 = 30 days; flow-state-change = 3600 = 1 hour). SPEC Vol 1 §19.8.3 Rule 2 applies to *_ms duration columns, not to the cooldown config table. Cooldowns are stored in seconds; DurationMs values in *_duration_ms columns are sub-day in practice. No overflow. Documentation note only.
 - **Q10** — `_epoch_ns`. The naming rule accepts it but there is no nanosecond type. Add `EpochNs` or drop the suffix.
 - **Q11** — Clock port. `time.time_ns()` is not monotonic. Decide whether the port needs a monotonic reading for durations.
 - **Q12** — Randomness and uuid. Constitution allows only as_of-seeded randomness. Decide how to lint `random`, `uuid`, `os.urandom` in `domain/**` and `kernels/**`.
