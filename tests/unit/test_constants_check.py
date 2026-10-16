@@ -108,3 +108,93 @@ def test_real_constants_module_has_no_drift():
         )
         == []
     )
+
+
+# 005c 4.1/4.3: every AI.3 constant is approved (value) or marked pending
+# (_APPROVAL_PENDING companion); anything else fails closed (Q5).
+def _write_arch(tmp_path: Path, body: str) -> Path:
+    arch = tmp_path / "arch.md"
+    arch.write_text(body)
+    return arch
+
+
+def test_approval_companions_pass_for_a_consistent_module(tmp_path):
+    arch = _write_arch(
+        tmp_path,
+        "AI.3 Additional Constants\n"
+        "  APPROVED_ONE 1\n"
+        "  # --- [RECOMMENDED values; running the patch script = approval] ---\n"
+        "  PENDING_ONE 2\n"
+        "AI.4 Chase Limits\n",
+    )
+    module = tmp_path / "constants.py"
+    module.write_text("APPROVED_ONE = 1\nPENDING_ONE_APPROVAL_PENDING = True\n")
+    assert check_constants.verify_approval_companions(arch, module) == []
+
+
+def test_orphan_constant_fails_approval_companions(tmp_path):
+    arch = _write_arch(
+        tmp_path,
+        "AI.3 Additional Constants\n  APPROVED_ONE 1\nAI.4 Chase Limits\n",
+    )
+    module = tmp_path / "constants.py"
+    module.write_text("SOMETHING_ELSE = 1\n")
+    violations = check_constants.verify_approval_companions(arch, module)
+    assert any("APPROVED_ONE" in v for v in violations), violations
+
+
+def test_pending_constant_without_companion_fails(tmp_path):
+    arch = _write_arch(
+        tmp_path,
+        "AI.3 Additional Constants\n"
+        "  # --- [RECOMMENDED values] ---\n"
+        "  PENDING_ONE 2\n"
+        "AI.4 Chase Limits\n",
+    )
+    module = tmp_path / "constants.py"
+    module.write_text("PENDING_ONE = 2\n")
+    violations = check_constants.verify_approval_companions(arch, module)
+    assert any("PENDING_ONE" in v and "companion" in v for v in violations), violations
+
+
+def test_real_constants_module_has_exhaustive_approval_companions():
+    module = REPO_ROOT / "src" / "quantflow" / "domain" / "constants.py"
+    assert check_constants.verify_approval_companions(ARCH_VOL1, module) == []
+
+
+def test_constants_module_docstring_contains_arch_marker_text():
+    """The generated module's pending label comes from ARCH, not from code."""
+    import re
+    from pathlib import Path
+
+    repo = Path(__file__).parents[2]
+
+    arch = (repo / "docs" / "reference" / "CURRENT" / "ARCH_v5.1.5.1_Vol1_Foundation.md").read_text(
+        encoding="utf-8"
+    )
+
+    # The marker line looks like:
+    #   # --- C12 dealer/greeks constants [RECOMMENDED ... = approval] ---
+    # The generator extracts the bracketed part. Capture both parts.
+    m = re.search(
+        r"#\s*-+\s*(?P<phrase>.+?)\s*\[(?P<bracket>RECOMMENDED[^\]]*)\]\s*-+",
+        arch,
+    )
+    assert m, "no [RECOMMENDED ...] marker found in ARCH Vol 1 AI.3"
+    pre_bracket_phrase = m.group("phrase").strip()
+    bracket_text = f"[{m.group('bracket').strip()}]"
+
+    consts = (repo / "src" / "quantflow" / "domain" / "constants.py").read_text(encoding="utf-8")
+    gen = (repo / "scripts" / "gen_constants.py").read_text(encoding="utf-8")
+
+    # Direction 1: the generated module carries the ARCH-derived label
+    assert bracket_text in consts, (
+        f"generated constants.py does not carry the ARCH marker text; "
+        f"expected substring: {bracket_text!r}"
+    )
+
+    # Direction 2: the OLD hardcoded phrase is gone from the generator
+    assert pre_bracket_phrase not in gen, (
+        f"generator still hardcodes the old label {pre_bracket_phrase!r}; "
+        f"it must be derived from ARCH"
+    )

@@ -3,9 +3,10 @@
 SPEC V1 §1.4.33: named numeric constants are defined exactly once in AI.3
 (the canonical home of every UPPER_SNAKE_CASE named constant) and referenced
 by name elsewhere. Values are emitted verbatim from the frozen bundle
-(docs/reference/CURRENT). Constants in the AI.3 "[RECOMMENDED ... approval]"
-block (C12 dealer/greeks set) get explicit NAME_APPROVAL_PENDING = True
-companions so features 031-036 cannot adopt them silently.
+(docs/reference/CURRENT). Constants inside the AI.3 "[RECOMMENDED ...]"
+block get explicit NAME_APPROVAL_PENDING = True companions so downstream
+features cannot adopt them silently. The block's label is read from the
+marker text at generation time; this script hardcodes no label.
 
 Usage: python3 scripts/gen_constants.py [--output PATH]
 """
@@ -26,6 +27,9 @@ NEXT_SUBSECTION = re.compile(r"^AI\.[4-9]\b")
 # Entry: indented NAME value, value verbatim (int or float), optional comment.
 ENTRY = re.compile(r"^\s+([A-Z][A-Z0-9_]*)\s+(-?\d+(?:\.\d+)?)\s*(?:#.*)?$")
 APPROVAL_MARKER = "[RECOMMENDED"
+# The bracketed text of the approval marker, used as the pending-set label so
+# the generated docstring never hardcodes a stale group name (005c Q5).
+APPROVAL_LABEL = re.compile(r"\[([^\[\]]+)\]")
 
 
 class Constant(NamedTuple):
@@ -97,6 +101,26 @@ def parse_ai3_constants(text: str) -> list[Constant]:
     return entries
 
 
+def parse_pending_label(text: str) -> str | None:
+    """Return the AI.3 "[RECOMMENDED ...]" marker's bracketed text, or None.
+
+    Derived so the generated docstring/pending comment name the real
+    approval-pending set instead of a hardcoded group (005c Q5).
+    """
+    lines = text.splitlines()
+    starts = [i for i, line in enumerate(lines) if AI3_START.match(line)]
+    if not starts:
+        return None
+    for line in lines[starts[-1] + 1 :]:
+        if NEXT_SUBSECTION.match(line):
+            break
+        if APPROVAL_MARKER in line:
+            match = APPROVAL_LABEL.search(line)
+            if match:
+                return match.group(1).strip()
+    return None
+
+
 ACCESSOR_BLOCK_TEMPLATE = '''
 # --- approved(name) accessor (005b Q6): fail-closed constant reads ---
 # Values table references approved names only; pending names are reachable
@@ -120,19 +144,20 @@ def approved(name: str) -> int | float:
 '''
 
 
-def render_constants_module(entries: list[Constant]) -> str:
+def render_constants_module(entries: list[Constant], pending_label: str | None = None) -> str:
     """Render the generated module; ruff-format-stable, deterministic."""
+    marker = pending_label or "RECOMMENDED ... approval"
     header = (
         '"""Named constants generated from ARCH v5.1.5.1 Vol 1 §AI.3 (SPEC V1 §1.4.33).\n'
         "\n"
         "GENERATED FILE -- do not edit by hand.\n"
         "Regenerate: python3 scripts/gen_constants.py\n"
         "Values are verbatim from the frozen bundle (docs/reference/CURRENT).\n"
-        'Approval-pending companions mark the AI.3 "[RECOMMENDED ... approval]"\n'
-        "set (C12 dealer/greeks): features 031-036 require recorded operator\n"
-        "approval before relying on them (never silently adopted; shadow-only\n"
-        "per constitution Sec 7). Read constants via approved(name): pending\n"
-        "and unknown names raise ConstantsError (SPEC V1 §1.4.33, 005b Q6).\n"
+        f'Approval-pending companions mark the AI.3 "[{marker}]" set:\n'
+        "features require recorded operator approval before relying on them\n"
+        "(never silently adopted; shadow-only per constitution Sec 7). Read\n"
+        "constants via approved(name): pending and unknown names raise\n"
+        "ConstantsError (SPEC V1 §1.4.33, 005b Q6).\n"
         '"""\n'
         "\n"
         "from quantflow.domain.errors import ConstantsError\n"
@@ -144,7 +169,7 @@ def render_constants_module(entries: list[Constant]) -> str:
     if pending_entries:
         pending_block = (
             "\n"
-            "# --- AI.3 [RECOMMENDED ... approval] set (C12): approval pending ---\n"
+            f"# --- AI.3 [{marker}] set: approval pending ---\n"
             + "".join(f"{c.name}_APPROVAL_PENDING = True\n" for c in pending_entries)
         )
         approved_entries = [c for c in entries if not c.approval_pending]
@@ -156,7 +181,8 @@ def render_constants_module(entries: list[Constant]) -> str:
 
 def generate(arch_path: Path = ARCH_VOL1) -> str:
     """Read ARCH Vol 1 §AI.3 and render the constants module source."""
-    return render_constants_module(parse_ai3_constants(arch_path.read_text()))
+    text = arch_path.read_text()
+    return render_constants_module(parse_ai3_constants(text), parse_pending_label(text))
 
 
 def main(argv: list[str] | None = None) -> int:

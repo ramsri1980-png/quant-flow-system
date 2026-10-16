@@ -21,7 +21,7 @@ DURATION_MS_MAX = 2**31 - 1
 EPOCH_MS_MIN = 1262304000000
 EPOCH_MS_MAX = 2840140800000
 
-EPOCH_NAME_SUFFIXES = ("_ts", "_at", "_epoch_ms", "_epoch_ns")
+EPOCH_NAME_SUFFIXES = ("_ts", "_at", "_until", "_epoch_ms", "_epoch_ns")
 DURATION_NAME_SUFFIXES = (
     "latency_ms",
     "staleness_ms",
@@ -39,8 +39,14 @@ FieldNameKind = Literal["epoch", "duration"]
 def epoch_ms(value: object, *, field: str = "epoch_ms") -> EpochMs:
     """Construct a UTC epoch-ms value from validated boundary input."""
     checked = checked_int(value, field=field)
-    if checked < EPOCH_MS_MIN or checked > EPOCH_MS_MAX:
-        raise UnitValueError(f"{field}: {checked} outside EPOCH_MS_MIN..EPOCH_MS_MAX")
+    if checked < EPOCH_MS_MIN:
+        raise UnitValueError(
+            f"{field}: {checked} below EPOCH_MS_MIN ({EPOCH_MS_MIN}); seconds passed as ms?"
+        )
+    if checked > EPOCH_MS_MAX:
+        raise UnitValueError(
+            f"{field}: {checked} above EPOCH_MS_MAX ({EPOCH_MS_MAX}); micros passed as ms?"
+        )
     return EpochMs(checked)
 
 
