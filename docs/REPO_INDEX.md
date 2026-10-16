@@ -83,6 +83,7 @@
 - [openspec/modules.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/modules.md)
 - [openspec/prompts/005-domain-types-units-clock.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/prompts/005-domain-types-units-clock.md)
 - [openspec/prompts/005a-domain-hardening.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/prompts/005a-domain-hardening.md)
+- [openspec/prompts/005b-domain-fail-closed.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/prompts/005b-domain-fail-closed.md)
 - [openspec/prompts/010-migration-runner.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/prompts/010-migration-runner.md)
 - [openspec/prompts/011-sqlite-repositories.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/prompts/011-sqlite-repositories.md)
 - [openspec/prompts/012-duckdb-repositories.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/openspec/prompts/012-duckdb-repositories.md)
