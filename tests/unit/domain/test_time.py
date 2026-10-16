@@ -95,6 +95,41 @@ def test_naming_rule_fails_on_ambiguous_ms_name():
             field_name_kind(field.name)
 
 
+# 005a 1.4: a duration suffix matches only on a token boundary (equal, or
+# "_" + suffix). Names that merely end in the letters of a suffix are
+# ambiguous and must be rejected, not silently classified.
+@pytest.mark.parametrize(
+    "name",
+    ["message_ms", "image_ms", "package_ms", "voltage_ms", "elapsed_ms_wait"],
+)
+def test_names_that_only_look_like_durations_are_rejected(name):
+    with pytest.raises(FieldNameError):
+        field_name_kind(name)
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "age_ms",
+        "quote_age_ms",
+        "latency_ms",
+        "feed_staleness_ms",
+        "call_duration_ms",
+        "response_ms",
+    ],
+)
+def test_duration_names(name):
+    assert field_name_kind(name) == "duration"
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["created_at", "bar_ts", "event_epoch_ms", "epoch_ms", "epoch_ms_wait"],
+)
+def test_epoch_names(name):
+    assert field_name_kind(name) == "epoch"
+
+
 # 2.5 Golden: no timezone state; ET rendering stays outside domain//kernels
 def test_epoch_and_duration_types_carry_no_timezone_attribute():
     for value in [epoch_ms(1729012345678), duration_ms(60_000)]:

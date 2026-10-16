@@ -115,3 +115,45 @@ def test_property_no_implicit_float_conversion(member):
     with pytest.raises(TypeError):
         int(member)
     assert isinstance(member.value, str)
+
+
+# 005a 1.3: pin the vocabulary behaviour the 005 review flagged. The two
+# state vocabularies legitimately share ACTIVE/RETRACTED/EXPIRED (SPEC V2
+# Sec 19.2); what must hold is that the types never bridge.
+def _values(enum_cls) -> set[str]:
+    return {member.value for member in enum_cls}
+
+
+def test_overlap_is_exactly_the_documented_shared_literals():
+    assert _values(ClusterState) & _values(EpisodeState) == {
+        "ACTIVE",
+        "RETRACTED",
+        "EXPIRED",
+    }
+
+
+def test_grade_is_disjoint_from_both_state_vocabularies():
+    assert _values(ClusterGrade).isdisjoint(_values(ClusterState))
+    assert _values(ClusterGrade).isdisjoint(_values(EpisodeState))
+
+
+def test_shared_literals_never_compare_equal_across_types():
+    assert ClusterState.ACTIVE != EpisodeState.ACTIVE
+    # ...but the underlying values document the deliberate overlap.
+    assert ClusterState.ACTIVE.value == EpisodeState.ACTIVE.value
+
+
+@pytest.mark.parametrize("literal", ["FORMING", "UPGRADED", "REVERSED"])
+def test_episode_only_literals_rejected_by_cluster_state(literal):
+    with pytest.raises(VocabularyError):
+        ClusterState(literal)
+
+
+@pytest.mark.parametrize(
+    "literal",
+    ["ACTIVE", "active", "Basic", ""],
+    ids=["upper", "lower", "mixed-case", "empty"],
+)
+def test_grade_rejects_unknown_and_case_mangled(literal):
+    with pytest.raises(VocabularyError):
+        ClusterGrade(literal)

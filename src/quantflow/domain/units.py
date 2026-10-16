@@ -55,5 +55,10 @@ def _round_half_even_div(numerator: int, denominator: int) -> int:
 
 
 def micros_to_mills(value: Micros) -> Mills:
-    """Convert _micros to _mills rounding half to even (RQ-006, integer-only)."""
-    return Mills(_round_half_even_div(int(value), MICROS_PER_MILL))
+    """Convert _micros to _mills rounding half to even (RQ-006, integer-only).
+
+    The input is validated like the factories: a float, bool or out-of-range
+    value is rejected rather than silently truncated (fail closed).
+    """
+    checked = checked_int(value, field="micros")
+    return Mills(_round_half_even_div(checked, MICROS_PER_MILL))
