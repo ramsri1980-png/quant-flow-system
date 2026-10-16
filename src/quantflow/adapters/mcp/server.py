@@ -1,4 +1,5 @@
 """Transport-only MCP server. One read-only tool: hello(name, nonce)."""
+
 from __future__ import annotations
 
 import logging as _logging
@@ -63,15 +64,12 @@ def create_app(api_key: str, public_host: str | None = None) -> Starlette:
         if not nonce or len(nonce) < 16 or len(nonce) > 128:
             raise ValueError("nonce must be 16-128 chars")
         response_id = str(uuid.uuid4())
-        log.info("tool=hello response_id=%s nonce_prefix=%s",
-                 response_id, nonce[:8])
+        log.info("tool=hello response_id=%s nonce_prefix=%s", response_id, nonce[:8])
         return {
             "message": f"hello {name}",
             "nonce": nonce,
             "response_id": response_id,
-            "server_time_utc": time.strftime(
-                "%Y-%m-%dT%H:%M:%SZ", time.gmtime()
-            ),
+            "server_time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "auth_mode": "api_key",
             "synthetic": True,
         }
@@ -84,11 +82,13 @@ def create_app(api_key: str, public_host: str | None = None) -> Starlette:
             yield
 
     async def health(_request):
-        return JSONResponse({
-            "status": "ok",
-            "service": "quantflow-transport-poc",
-            "synthetic_only": True,
-        })
+        return JSONResponse(
+            {
+                "status": "ok",
+                "service": "quantflow-transport-poc",
+                "synthetic_only": True,
+            }
+        )
 
     app = Starlette(
         routes=[Route("/healthz", health), Mount("/", app=mcp_app)],

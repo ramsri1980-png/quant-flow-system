@@ -1,4 +1,5 @@
 """MCP probe. Connects, lists tools, calls hello with a fresh nonce."""
+
 from __future__ import annotations
 
 import argparse
@@ -16,33 +17,24 @@ from mcp.client.streamable_http import streamable_http_client
 async def run(url: str, api_key: str, nonce: str | None = None) -> dict:
     nonce = nonce or secrets.token_hex(16)
     headers = {"x-api-key": api_key}
-    async with httpx.AsyncClient(
-        headers=headers, timeout=15, follow_redirects=False
-    ) as http:
+    async with httpx.AsyncClient(headers=headers, timeout=15, follow_redirects=False) as http:
         health_url = url.replace("/mcp", "/healthz")
         h = await http.get(health_url)
         # /healthz may be behind Cloudflare Access; only /mcp needs to be reachable
         # with the API key. Do not fail the probe on a non-200 healthz.
         if h.status_code != 200:
             print(
-                f"warning: healthz returned {h.status_code} "
-                "(expected if behind Cloudflare Access)",
+                f"warning: healthz returned {h.status_code} (expected if behind Cloudflare Access)",
                 file=sys.stderr,
             )
         async with streamable_http_client(url, http_client=http) as (r, w, _):
             async with ClientSession(r, w) as session:
                 init = await session.initialize()
-                tools = sorted(
-                    t.name for t in (await session.list_tools()).tools
-                )
-                call = await session.call_tool(
-                    "hello", {"name": "operator", "nonce": nonce}
-                )
+                tools = sorted(t.name for t in (await session.list_tools()).tools)
+                call = await session.call_tool("hello", {"name": "operator", "nonce": nonce})
                 if call.isError:
                     raise RuntimeError("hello tool returned error")
-                payload = call.structuredContent or json.loads(
-                    call.content[0].text
-                )
+                payload = call.structuredContent or json.loads(call.content[0].text)
                 return {
                     "protocol_version": init.protocolVersion,
                     "tools": tools,

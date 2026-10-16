@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Update runbook with current branch, recent commits, tree status.
 Idempotent. Run after each git push (or via qfpush alias)."""
+
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,23 +20,25 @@ def main():
     status = sh("git", "status", "--short") or "(clean)"
     now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    block = "\n".join([
-        "",
-        "### Runbook auto-update - " + now,
-        "",
-        "Branch: `" + branch + "`",
-        "",
-        "Recent commits:",
-        "```",
-        log,
-        "```",
-        "",
-        "Working tree:",
-        "```",
-        status,
-        "```",
-        "",
-    ])
+    block = "\n".join(
+        [
+            "",
+            "### Runbook auto-update - " + now,
+            "",
+            "Branch: `" + branch + "`",
+            "",
+            "Recent commits:",
+            "```",
+            log,
+            "```",
+            "",
+            "Working tree:",
+            "```",
+            status,
+            "```",
+            "",
+        ]
+    )
 
     text = RUNBOOK.read_text()
     marker = "\n**END OF RUNBOOK"
