@@ -28,9 +28,10 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - Offsite backup target: ARCH V1 says rclone crypt → B2/R2; runbook uses MEGA for the LUKS header only.
 - Provider payload schemas and raw_color → normalized_meaning mapping tables: need fixtures.
 
-### Open questions from brief 005a (recorded 2026-10-16; recommended option first; SOME implemented (Q1, Q6, Q8, Q9, Q12, Q13 closed) — resolve in 005b or the consuming feature)
+### Open questions from brief 005a (recorded 2026-10-16; recommended option first; NONE implemented — resolve in 005b or the consuming feature)
 
 - **Q1** — Wrapper strategy. Default in 1.2 of 005a is factory-only plus AST ban (implemented). Alternative: make wrappers int subclasses with a validating `__new__` (also needs arithmetic rules so `Cents + Micros` raises). Confirm.
+- **Q2** — Floats in `constants.py`. Thresholds like `DEALER_COVERAGE_MIN = 0.80`, `SPX_*_PCT`, weights, and `MIN_VEGA` are floats, but AGENTS rule 2 says no floats in the decision path. Options: declare them analysis-side only, or restate as integers (for example ppm) via an ARCH V1 §AI.3 amendment.
 - **Q3** — `_PCT` semantics. `SPX_FALSE_CROSS_TOLERANCE_PCT = 0.0015` is a fraction, but `BUDGET_FLOW_ALERT_RESERVE_PCT = 60` and `BUDGET_PREMARKET_BORROW_PCT = 20` are percent points. A 0.60 vs 60 confusion is possible. Needs an ARCH amendment to normalize the names.
 - **Q4** — Unitless constants. `TACTICAL_2DTE = 3000`, `SHORT_TACTICAL = 5000`, `SWING = 10000`, `LONGER_HORIZON = 30000` have no unit in the name. Confirm the unit and rename in ARCH.
 - **Q5** — Approval-pending flags. `MIN_VEGA` has no `_APPROVAL_PENDING` companion, and the generated docstring calls the pending set "C12 dealer/greeks" although it includes SPX, WAL, budget and newsletter constants. Verify against ARCH V1 §AI.3, then fix `scripts/gen_constants.py` if needed.
@@ -39,8 +40,12 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - **Q8** — Plausible epoch range. `epoch_ms` accepts any int64, so seconds (~1.7e9) or microseconds pass silently. Operator must supply min/max bounds.
 - **Q9** — `DURATION_MS_MAX = 2**31-1` (~24.86 days). **RESOLVED — no conflict.** SPEC Vol 4 §18.14 lists cooldown values in SECONDS (behavioral-drift = 2592000 = 30 days; flow-state-change = 3600 = 1 hour). SPEC Vol 1 §19.8.3 Rule 2 applies to *_ms duration columns, not to the cooldown config table. Cooldowns are stored in seconds; DurationMs values in *_duration_ms columns are sub-day in practice. No overflow. Documentation note only.
 - **Q10** — `_epoch_ns`. The naming rule accepts it but there is no nanosecond type. Add `EpochNs` or drop the suffix.
+- **Q11** — Clock port. `time.time_ns()` is not monotonic. Decide whether the port needs a monotonic reading for durations.
 - **Q12** — Randomness and uuid. Constitution allows only as_of-seeded randomness. Decide how to lint `random`, `uuid`, `os.urandom` in `domain/**` and `kernels/**`.
 - **Q13** — Name matches both epoch and duration (for example `epoch_latency_ms`): currently returns "epoch". Should it be rejected as ambiguous?
+- **Q14** — Dollars conversion for cents/mills. Confirm whether any formula converts them, and with what divisor.
+- **Q15** — `pocs/interface/` drift. It duplicates `AGENTS.md`, `.opencode/`, and `openspec/` and already differs (it lacks `041b-evaluation-protocol.md`). Freeze it as a POC snapshot, delete it, or sync it.
+- **Q16** — Unreviewed items. The archived 005 `design.md`, `proposal.md`, `tasks.md`, the domain-enums and repo-bootstrap specs, `errors.py`, `ports/clock.py`, and the SPEC citations were not reviewed. Verify them.
 
 
 ## Resolved (2026-10-15)
@@ -72,40 +77,26 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - **"Drop schedule jitter for provider access"** — violates ARCH Vol 3 §F.0.1a ("may only be strengthened"). Rejected 2026-10-15.
 - **"Exclude interaction emulation / mimicry / fingerprint"** — violates §F.A, §F.B, §F.H, §F.P. Rejected 2026-10-15.
 
+- **Q2** -- Floats in constants.py vs AGENTS rule 2. RESOLVED -- narrower rule.
   Ban floats only for money/time/quantity/price (quantities with units).
   Dimensionless [0,1] ratios (opposing_share, confluence_score, coverage caps,
   calibrated_probability, loss_ratio) stay float. Do NOT blanket-convert to
   ppm/bps -- that churns ~30 constants and forces formula rewrites. Record in
   AGENTS.md as the interpretation of rule 2.
+- **Q11** -- Monotonic clock port. RESOLVED -- deferred.
   No consumer needs a monotonic reading today. EpochMs remains wall-clock.
   Add a separate MonotonicMs reading to the Clock port only when a
   timing-sensitive path requires it.
+- **Q14** -- Dollars conversion for cents/mills. RESOLVED.
   Conversion allowed ONLY inside designated kernels (flow strength D.14b,
   FDI D.25, hedge pressure D.21) -- those formulas require
   S = spot_micros / 1_000_000 before evaluating X_k / D_i. Renderers use a
   separate display accessor. Banned everywhere else. Current spec text
   ("dollars only at formula boundaries") already says this; no spec edit.
+- **Q15** -- pocs/interface/ drift. RESOLVED -- freeze as snapshot.
   Create pocs/interface/README.md pointing to canonical files at repo root.
   Do not delete (loses provenance). Do not sync (re-drifts).
+- **Q16** -- Unreviewed archived 005 items. RESOLVED -- deferred.
   No blocking gaps surfaced during 005b implementation. Revisit if a future
   change reveals an inconsistency with the archived 005 design, proposal,
   or tasks.
-
-## Resolved (2026-10-16)
-
-- **Q2** — Floats in `constants.py`. Thresholds like `DEALER_COVERAGE_MIN = 0.80`, `SPX_*_PCT`, weights, and `MIN_VEGA` are floats, but AGENTS rule 2 says no floats in the decision path. Options: declare them analysis-side only, or restate as integers (for example ppm) via an ARCH V1 §AI.3 amendment.
-- **Q11** — Clock port. `time.time_ns()` is not monotonic. Decide whether the port needs a monotonic reading for durations.
-- **Q14** — Dollars conversion for cents/mills. Confirm whether any formula converts them, and with what divisor.
-- **Q15** — `pocs/interface/` drift. It duplicates `AGENTS.md`, `.opencode/`, and `openspec/` and already differs (it lacks `041b-evaluation-protocol.md`). Freeze it as a POC snapshot, delete it, or sync it.
-- **Q16** — Unreviewed items. The archived 005 `design.md`, `proposal.md`, `tasks.md`, the domain-enums and repo-bootstrap specs, `errors.py`, `ports/clock.py`, and the SPEC citations were not reviewed. Verify them.
-- **Q2** -- Floats in constants.py vs AGENTS rule 2. RESOLVED -- narrower rule.
-- **Q11** -- Monotonic clock port. RESOLVED -- deferred.
-- **Q14** -- Dollars conversion for cents/mills. RESOLVED.
-- **Q15** -- pocs/interface/ drift. RESOLVED -- freeze as snapshot.
-- **Q16** -- Unreviewed archived 005 items. DEFERRED (not resolved).
-- **Q8** -- Epoch ms plausible range. RESOLVED (005b). Bounds
-  EPOCH_MS_MIN=1262304000000 / EPOCH_MS_MAX=2840140800000 in time.py.
-  Range gate rejects seconds/micros at construction.
-- **Q13** -- Ambiguous time field names. RESOLVED (005b).
-  field_name_kind raises FieldNameError when a name matches both epoch and
-  duration patterns (e.g. epoch_latency_ms).
