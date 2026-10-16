@@ -18,6 +18,11 @@
           "effect": "deny"
         },
         {
+          "action": "harness*",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
           "action": "read",
           "resource": "*",
           "effect": "allow"
@@ -114,7 +119,7 @@
           "effect": "deny"
         },
         {
-          "action": "harness*_execute_and_capture",
+          "action": "harness-tools_execute_and_capture",
           "resource": "*",
           "effect": "deny"
         }
@@ -128,6 +133,11 @@
           "action": "*",
           "resource": "*",
           "effect": "deny"
+        },
+        {
+          "action": "harness*",
+          "resource": "*",
+          "effect": "allow"
         },
         {
           "action": "read",
@@ -199,6 +209,11 @@
           "action": "*",
           "resource": "*",
           "effect": "deny"
+        },
+        {
+          "action": "harness*",
+          "resource": "*",
+          "effect": "allow"
         },
         {
           "action": "read",

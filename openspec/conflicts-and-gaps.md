@@ -44,13 +44,14 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - **RQ-004** — grade/state/episode split confirmed present in SPEC Vol 2 §19.2 (`episode_state`, 4 occurrences). Closed 2026-10-15.
 - **RQ-005** — `package_quote_current.package_quote_id` confirmed cache-only, never in decision evidence (SPEC Vol 2 §19.6 invariant AM). Closed 2026-10-15.
 - **RQ-006** (feature 005) — Rounding for unit conversions: integer-only with round-half-even at the display boundary; no fractional dollars in the decision path. Operator ruling 2026-10-15. Closed 2026-10-15.
-- **RQ-007** (feature 005) — DurationMs bound: BIGINT/64-bit parity with a validated maximum `DURATION_MS_MAX` in code; the PROPOSED int32 bound is rejected. Operator ruling 2026-10-15. Closed 2026-10-15.
+- **RQ-007** (feature 005) — DurationMs bound: BIGINT/64-bit parity with a validated maximum `DURATION_MS_MAX = 2**31 - 1` in code (structural value bound — the Rule 2 column-safe bound — enforced at construction; the type stays 64-bit, i.e. no int32 *type* bound); the PROPOSED int32 bound is rejected. Operator ruling 2026-10-15. Closed 2026-10-15.
 
 ## Still open (deferred to relevant feature)
 
 - **C7** — cosmetic invariant label collision with ARCH §AH/§AI. Deferred; no functional impact until both referenced together.
 - **C10** — baseline manifest. Belongs to feature 010 per ARCH Vol 2 §C.3.
 - **C12** — dealer/greeks formulas. Adopted from `openspec/formulas-dealer-greeks.md`; final validation lands with features 031/033/034/035/036.
+- **RQ-008** (feature 005) — AI.1/AI.2 named constants (BASE_RISK_PCT, PREMIUM_STOP_PCT, THETA_BUDGET_PCT, TIME_STOP_DAYS, VOLATILITY_EXIT_IVR) have no home in `domain/constants.py`: the 005 spec delta scopes generation to ARCH Vol 1 §AI.3 only (parser anchored on the last `^AI.3` header so changelog mentions cannot shift it). A feature that needs an AI.1/AI.2 constant must extend `scripts/gen_constants.py` deliberately. NON-BLOCKING.
 
 ## Rejected
 

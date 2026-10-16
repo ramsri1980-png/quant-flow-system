@@ -40,7 +40,8 @@ without a duration qualifier) fail the test and require an explicit rename").
 - **WHEN** a duration value is constructed that is negative or exceeds
   `DURATION_MS_MAX` (named structural constant, validated in code)
 - **THEN** construction fails explicitly (fail closed, no wrap, no clamp);
-  DurationMs keeps 64-bit BIGINT / SQLite INTEGER parity -- no int32 bound
+  DurationMs keeps 64-bit BIGINT / SQLite INTEGER parity -- no int32 type
+  bound; structural value bound 2**31-1 enforced at construction
   (operator ruling 2026-10-15; the SPEC V1 Sec 19.8.3 Rule 2 INTEGER mapping
   is satisfied at 64-bit in Python)
 

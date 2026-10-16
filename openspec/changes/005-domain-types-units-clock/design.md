@@ -42,16 +42,20 @@ reuse in code (`openspec/modules.md`: none yet).
      overhead, pickle/copy edge cases); float-free dataclass (invented
      arithmetic API); IntEnum (implies closed value set -- wrong for prices).
    - Runtime rejection of float at boundaries uses an explicit
-     `checked_int()` constructor (raises `TypeError` on `float`, `bool`
-     passes as int subclass -- documented, tests pin it).
+     `checked_int()` constructor (raises `TypeError` on `float` and on
+     `bool` -- bool rejection pinned by task 1.2 and the NON-BLOCKING bool
+     ruling; range violations raise `UnitValueError`).
 
 2. **Epoch time as `EpochMs = NewType("EpochMs", int)`** plus a
    `DurationMs` newtype with 64-bit (BIGINT / SQLite INTEGER) parity.
    RESOLVED (operator ruling 2026-10-15): no int32 bound. Durations are
    non-negative and validated against a named maximum `DURATION_MS_MAX`
    enforced in code at construction (fail closed on negative or larger
-   values). The bound is structural, not a market constant from AI.3, and
-   lives in the constants module for single-place revision.
+   values). The bound is structural, not a market constant from AI.3:
+   `DURATION_MS_MAX = 2**31-1` (the SPEC V1 Sec 19.8.3 Rule 2 column-safe
+   bound; anchored, not invented) and lives beside DurationMs in
+   `domain/time.py` -- the AI.3-generated constants module stays verbatim
+   AI.3 only (task 4.1 byte-identical regeneration).
 
 3. **Clock port is a `Protocol`** with `now_ms() -> EpochMs`. Domain/kernels
    never import a concrete clock; application layer wires `SystemClock`
@@ -80,13 +84,26 @@ reuse in code (`openspec/modules.md`: none yet).
    flip this via recorded operator approval, not silently. Code references
    constants by name; a token-scan check fails on UPPER_SNAKE_CASE literals
    outside the constants module (mirrors SPEC V1 Sec 1.4.34/1.4.33 CI lint).
+   Implemented as `scripts/check_constants.py`: flags (a) any UPPER_SNAKE
+   assignment in any scope (module, function, class -- enum-class bodies
+   excepted, since members are vocabulary literals) redefining an AI.3 name
+   anywhere in `src/quantflow/**` outside `domain/constants.py` (skipped only
+   by canonical path, never by basename), and (b) any
+   UPPER_SNAKE constant in any scope not sourced from AI.3, except the
+   explicit `STRUCTURAL_ALLOWLIST` (each entry carries a reason; needed for
+   RQ-007's `DURATION_MS_MAX` in `domain/time.py`, unit bounds/scale in
+   `domain/units.py`, and the pre-existing POC adapter HOST/PORT).
+   Anything new fails closed until deliberately allowlisted or added to
+   AI.3.
    - Alternative rejected: runtime parse of AI.3 on import (kernel purity,
      import-time I/O, slower tests); hand-written constants (drift risk,
      the docs already mandate the lint).
 
 6. **Bundle hash check as a plain pytest** reading
-   `docs/reference/CURRENT/SHA256SUMS` and hashing each file -- no DB, no
-   network, temp-paths only for its own outputs.
+   `docs/reference/CURRENT/SHA256SUMS`, hashing each listed file, and
+   asserting set equality between the bundle's file set and the manifest's
+   entries (an extra file fails the check) -- no DB, no network, temp-paths
+   only for its own outputs.
 
 ## Risks / Trade-offs
 
@@ -114,6 +131,9 @@ change (DB code out of scope). No applied migration is modified.
 - `openspec/modules.md`: no existing Python modules (`src/quantflow/` is
   package scaffolding only) -- nothing reusable.
 - New modules and why each is needed:
+  - `domain/errors.py` -- `QuantFlowError` base + `UnitValueError` (playbook
+    02: typed domain error hierarchy; fail-closed range violations need one
+    named reason class).
   - `domain/units.py` -- canonical home of the three unit newtypes (docs
     mandate exactly one representation; none exists).
   - `domain/time.py` -- epoch/duration types (same).
@@ -121,6 +141,9 @@ change (DB code out of scope). No applied migration is modified.
   - `domain/constants.py` -- generated from AI.3 (SPEC V1 Sec 1.4.33).
   - `ports/clock.py` -- Clock Protocol (adapters are the only place a
     concrete clock may live; no port exists yet).
+  - `adapters/clock.py` -- `SystemClock` concrete implementation of the
+    Clock port (playbook 01: adapters implement ports; the only sanctioned
+    live wall-clock read).
   - `scripts/gen_constants.py`, `scripts/check_constants.py` -- generation
     and CI check.
 - Test classes per constitution Sec 11 / brief seed scenarios are mapped in
