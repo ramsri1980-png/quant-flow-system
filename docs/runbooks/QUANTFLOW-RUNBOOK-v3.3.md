@@ -9,20 +9,24 @@
 
 ---
 
-## CURRENT STATE (2026-10-15)
+<!-- AUTO:CURRENT-STATE:START -->
+## CURRENT STATE (auto 2026-10-16T16:33:30Z)
 
 | Item | Status |
 |---|---|
 | Session 1 (storage) | COMPLETE |
 | Session 2 (repo, toolchain, design freeze) | COMPLETE |
-| Session 3 (OpenCode + OpenSpec zero-token setup) | COMPLETE - tag `session3-complete`, commit `56a6d22` |
-| Session 4 (Feature 005 kickoff) | NEXT |
-| Repo | clean at `~/src/quant-flow-system` |
-| Tags | `poc-transport-complete`, `foundation-complete`, `session3-complete` |
-| Design bundle | 11 files, SHA256SUMS verified, `docs/reference/CURRENT` symlink |
-| ADRs | ADR-001..004 committed |
+| Session 3 (OpenCode + OpenSpec zero-token setup) | COMPLETE |
+| Feature 005 | COMPLETE — tag `feature-005-complete` |
+| Feature 005a | COMPLETE — tag `feature-005a-complete` |
+| Repo | branch `feature/005a-domain-hardening` |
+| Working tree | M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md |
+| Tags | `feature-005-complete`, `feature-005a-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
+| Last commit | `06a1259 docs: runbook auto-update after feature 005a` |
 
-**Next action:** Session 4 - Feature 005 kickoff.
+**Next action:** Feature 010 — migration runner
+
+<!-- AUTO:CURRENT-STATE:END -->
 
 
 ---
@@ -66,19 +70,22 @@
 
 ---
 
+<!-- AUTO:OVERALL-PROGRESS:START -->
 ## OVERALL PROGRESS
 
 | Phase | Sessions | Status |
 |---|---|---|
-| E0 Setup & Foundation | 1–7 | Session 1 done · Session 2 done · Session 3 done (tag session3-complete, commit 56a6d22) · Session 4 next |
+| E0 Setup & Foundation | 1–7 | Feature 005 done · Feature 005a done |
 | E1 Storage & Durability | 8–13 | ⬜ Not started |
 | E2 Canonical Event Pipeline | 14–17 | ⬜ Not started |
 | E3 Pure Quant Kernels | 18–25 | ⬜ Not started |
 | E4 Decision Evidence & Delivery | 26–29 | ⬜ Not started |
 | E5 Provider Adapters | 30–35 | ⬜ Not started |
 | E6 User Workflows | 36–42 | ⬜ Not started |
-| E7 Interface, Ops & Release | 43–48 | ⬜ Not started — transport primitives proven by POC |
+| E7 Interface, Ops & Release | 43–48 | ⬜ Not started |
 | E8 Forward Research | 49+ | ⬜ Not started |
+
+<!-- AUTO:OVERALL-PROGRESS:END -->
 
 ---
 
@@ -1399,4 +1406,81 @@ cbccc7e fix(005): close round-3 review MINORs + tidy update_runbook.py
 Working tree:
 ```
 (clean)
+```
+
+### Runbook auto-update - 2026-10-16T16:24:22Z
+
+Branch: `feature/005a-domain-hardening`
+
+Recent commits:
+```
+06a1259 docs: runbook auto-update after feature 005a
+3e3afc5 chore(opencode): bump qf-build steps 30 -> 50 for multi-task apply runs
+04cf0bf feat(005a): domain hardening — review fixes for 005
+04ba126 Update repo index
+1ecc637 Add GitHub Actions workflow for repo index generation
+1cebdaa merge: feature 005 complete
+696f18e docs: runbook auto-update after feature 005 archive
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+be1588a docs: runbook auto-update after feature 005 review cycles
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+?? docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md.bak-markers-1792167817
+?? scripts/update_runbook.py.bak-1792167846
+```
+
+### Runbook auto-update - 2026-10-16T16:32:47Z
+
+Branch: `feature/005a-domain-hardening`
+
+Recent commits:
+```
+06a1259 docs: runbook auto-update after feature 005a
+3e3afc5 chore(opencode): bump qf-build steps 30 -> 50 for multi-task apply runs
+04cf0bf feat(005a): domain hardening — review fixes for 005
+04ba126 Update repo index
+1ecc637 Add GitHub Actions workflow for repo index generation
+1cebdaa merge: feature 005 complete
+696f18e docs: runbook auto-update after feature 005 archive
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+be1588a docs: runbook auto-update after feature 005 review cycles
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+ M scripts/update_runbook.py
+?? docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md.bak-markers-1792167817
+?? scripts/update_runbook.py.bak-1792167846
+```
+
+### Runbook auto-update - 2026-10-16T16:33:30Z
+
+Branch: `feature/005a-domain-hardening`
+
+Recent commits:
+```
+06a1259 docs: runbook auto-update after feature 005a
+3e3afc5 chore(opencode): bump qf-build steps 30 -> 50 for multi-task apply runs
+04cf0bf feat(005a): domain hardening — review fixes for 005
+04ba126 Update repo index
+1ecc637 Add GitHub Actions workflow for repo index generation
+1cebdaa merge: feature 005 complete
+696f18e docs: runbook auto-update after feature 005 archive
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+be1588a docs: runbook auto-update after feature 005 review cycles
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+ M scripts/update_runbook.py
+?? docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md.bak-markers-1792167817
+?? scripts/update_runbook.py.bak-1792167846
 ```
