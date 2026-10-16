@@ -27,11 +27,11 @@ BANNED_CALL_NAMES = {
     "process_time",
     "process_time_ns",
     "urandom",
-    # 005b Q12: randomness is as_of-seeded only; ban the shapes outright.
+    # 005b Q12 / 005c: randomness is as_of-seeded only; the `random` and `uuid`
+    # module bans (BANNED_MODULES) govern randomness. `getrandbits` is kept as a
+    # call name -- it is not a numpy Generator/RandomState method, so it cannot
+    # arise from an injected generator.
     "getrandbits",
-    "randint",
-    "random",
-    "randrange",
     "uuid1",
     "uuid4",
 }
@@ -166,9 +166,10 @@ def test_scan_detects_secrets_import(tmp_path):
     assert len(find_wall_clock_violations(bad)) == 1
 
 
-# 005b Q12: randomness ban (spec epoch-clock "Random and uuid imports are
-# rejected"). All three imports plus every banned call shape in one fixture;
-# secrets.token_hex is caught by the banned secrets module import.
+# 005b Q12 / 005c: randomness ban (spec epoch-clock "Random and uuid imports are
+# rejected"). All three imports plus the surviving banned call shapes in one
+# fixture; secrets.token_hex is caught by the banned secrets module import, and
+# random.randint/randrange by the banned random module import.
 def test_scan_detects_random_and_uuid_shapes(tmp_path):
     bad = tmp_path / "bad_fixture.py"
     bad.write_text(
@@ -188,8 +189,9 @@ def test_scan_detects_random_and_uuid_shapes(tmp_path):
         "    )\n"
     )
     violations = find_wall_clock_violations(bad)
-    # 3 banned imports + 5 banned call names (token_hex: module-banned).
-    assert len(violations) == 8, violations
+    # 3 banned module imports + 3 banned call names (getrandbits, uuid1, uuid4);
+    # random.randint/randrange and secrets.token_hex are module-ban violations.
+    assert len(violations) == 6, violations
 
 
 def test_scan_detects_random_and_uuid_from_imports(tmp_path):
@@ -198,3 +200,13 @@ def test_scan_detects_random_and_uuid_from_imports(tmp_path):
         "from random import randint\nfrom uuid import uuid4\nfrom secrets import token_hex\n"
     )
     assert len(find_wall_clock_violations(bad)) == 3
+
+
+# 005c (brief 2.5): an injected generator's randomness-seeded methods are not
+# wall-clock violations. Randomness is governed by the `random` *module* ban, not
+# by a call name -- the scan has no type information, so a method named `random`
+# on an injected `rng` parameter must not be flagged.
+def test_scan_does_not_flag_injected_generator_rng_method(tmp_path):
+    good = tmp_path / "injected_rng.py"
+    good.write_text("def f(rng):\n    return rng.random() + rng.normal()\n")
+    assert find_wall_clock_violations(good) == []

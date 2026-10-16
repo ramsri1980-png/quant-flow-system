@@ -71,9 +71,7 @@ def _direct_pending_reads(path: Path) -> list[str]:
             # though the local binding is just "T".
             candidates = [node.asname, node.name.partition(".")[0]]
             for cand in candidates:
-                if cand and (
-                    cand.endswith("_APPROVAL_PENDING") or cand in PENDING_BASE_NAMES
-                ):
+                if cand and (cand.endswith("_APPROVAL_PENDING") or cand in PENDING_BASE_NAMES):
                     reads.append(f"{path}:{node.lineno} direct read of {cand}")
             continue
         else:
@@ -136,13 +134,9 @@ def test_scan_allows_approved_access(tmp_path):
     assert _direct_pending_reads(ok) == []
 
 
-
 def test_scan_detects_aliased_pending_import(tmp_path):
     """An aliased from-import of a pending name must still be flagged."""
     bad = tmp_path / "bad_alias.py"
-    bad.write_text(
-        "from quantflow.domain.constants import DEALER_T_MIN_S as T\n"
-        "x = T\n"
-    )
+    bad.write_text("from quantflow.domain.constants import DEALER_T_MIN_S as T\nx = T\n")
     hits = _direct_pending_reads(bad)
     assert any("DEALER_T_MIN_S" in h for h in hits), hits

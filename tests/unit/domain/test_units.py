@@ -6,7 +6,7 @@ operator ruling RQ-006 (integer-only, round-half-even at display boundary).
 """
 
 import ast
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 from pathlib import Path
 
 import pytest
@@ -17,6 +17,7 @@ from quantflow.domain.errors import UnitValueError
 from quantflow.domain.units import (
     INT64_MAX,
     INT64_MIN,
+    MICROS_PER_MILL,
     Micros,
     cents,
     micros,
@@ -146,6 +147,17 @@ def test_micros_to_mills_rejects_non_int(bad):
 def test_micros_to_mills_rejects_out_of_range():
     with pytest.raises(UnitValueError):
         micros_to_mills(2**63)  # type: ignore[arg-type]
+
+
+# 005c 7.1: property oracle -- the integer half-even divider must agree with
+# Decimal ROUND_HALF_EVEN over the whole signed 64-bit range (proves the
+# hand-rolled integer path has no float intermediate and no tie bias).
+@given(st.integers(min_value=INT64_MIN, max_value=INT64_MAX))
+def test_micros_to_mills_matches_decimal_half_even_oracle(value):
+    expected = int(
+        (Decimal(value) / Decimal(MICROS_PER_MILL)).quantize(Decimal(1), rounding=ROUND_HALF_EVEN)
+    )
+    assert micros_to_mills(Micros(value)) == expected
 
 
 @pytest.mark.parametrize(

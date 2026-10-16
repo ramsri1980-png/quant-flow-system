@@ -28,25 +28,29 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - Offsite backup target: ARCH V1 says rclone crypt → B2/R2; runbook uses MEGA for the LUKS header only.
 - Provider payload schemas and raw_color → normalized_meaning mapping tables: need fixtures.
 
-### Open questions from brief 005a (recorded 2026-10-16; recommended option first; NONE implemented — resolve in 005b or the consuming feature)
+### Open questions from brief 005a (still open — 2026-10-16)
 
-- **Q1** — Wrapper strategy. Default in 1.2 of 005a is factory-only plus AST ban (implemented). Alternative: make wrappers int subclasses with a validating `__new__` (also needs arithmetic rules so `Cents + Micros` raises). Confirm.
-- **Q2** — Floats in `constants.py`. Thresholds like `DEALER_COVERAGE_MIN = 0.80`, `SPX_*_PCT`, weights, and `MIN_VEGA` are floats, but AGENTS rule 2 says no floats in the decision path. Options: declare them analysis-side only, or restate as integers (for example ppm) via an ARCH V1 §AI.3 amendment.
-- **Q3** — `_PCT` semantics. `SPX_FALSE_CROSS_TOLERANCE_PCT = 0.0015` is a fraction, but `BUDGET_FLOW_ALERT_RESERVE_PCT = 60` and `BUDGET_PREMARKET_BORROW_PCT = 20` are percent points. A 0.60 vs 60 confusion is possible. Needs an ARCH amendment to normalize the names.
-- **Q4** — Unitless constants. `TACTICAL_2DTE = 3000`, `SHORT_TACTICAL = 5000`, `SWING = 10000`, `LONGER_HORIZON = 30000` have no unit in the name. Confirm the unit and rename in ARCH.
-- **Q5** — Approval-pending flags. `MIN_VEGA` has no `_APPROVAL_PENDING` companion, and the generated docstring calls the pending set "C12 dealer/greeks" although it includes SPX, WAL, budget and newsletter constants. Verify against ARCH V1 §AI.3, then fix `scripts/gen_constants.py` if needed.
-- **Q6** — Enforcing approval-pending. Nothing stops a kernel from using a pending constant. Option: an accessor that raises unless approved, or a lint test.
-- **Q7** — Structural constants location. `INT64_MIN/MAX`, `MICROS_PER_MILL`, `DURATION_MS_MAX` and the suffix tuples live in `units.py`/`time.py`, not `constants.py` (AGENTS rule 8). Confirm they are exempt, and check what `scripts/check_constants.py` covers.
-- **Q8** — Plausible epoch range. `epoch_ms` accepts any int64, so seconds (~1.7e9) or microseconds pass silently. Operator must supply min/max bounds.
-- **Q9** — `DURATION_MS_MAX = 2**31-1` (~24.86 days). **RESOLVED — no conflict.** SPEC Vol 4 §18.14 lists cooldown values in SECONDS (behavioral-drift = 2592000 = 30 days; flow-state-change = 3600 = 1 hour). SPEC Vol 1 §19.8.3 Rule 2 applies to *_ms duration columns, not to the cooldown config table. Cooldowns are stored in seconds; DurationMs values in *_duration_ms columns are sub-day in practice. No overflow. Documentation note only.
-- **Q10** — `_epoch_ns`. The naming rule accepts it but there is no nanosecond type. Add `EpochNs` or drop the suffix.
-- **Q11** — Clock port. `time.time_ns()` is not monotonic. Decide whether the port needs a monotonic reading for durations.
-- **Q12** — Randomness and uuid. Constitution allows only as_of-seeded randomness. Decide how to lint `random`, `uuid`, `os.urandom` in `domain/**` and `kernels/**`.
-- **Q13** — Name matches both epoch and duration (for example `epoch_latency_ms`): currently returns "epoch". Should it be rejected as ambiguous?
-- **Q14** — Dollars conversion for cents/mills. Confirm whether any formula converts them, and with what divisor.
-- **Q15** — `pocs/interface/` drift. It duplicates `AGENTS.md`, `.opencode/`, and `openspec/` and already differs (it lacks `041b-evaluation-protocol.md`). Freeze it as a POC snapshot, delete it, or sync it.
-- **Q16** — Unreviewed items. The archived 005 `design.md`, `proposal.md`, `tasks.md`, the domain-enums and repo-bootstrap specs, `errors.py`, `ports/clock.py`, and the SPEC citations were not reviewed. Verify them.
+Items below remain open; they belong to 005c or a later change. Items already
+resolved appear under "## Resolved (2026-10-16)" further down.
 
+- **Q3** — `_PCT` semantics. `SPX_FALSE_CROSS_TOLERANCE_PCT = 0.0015` is a
+  fraction, but `BUDGET_FLOW_ALERT_RESERVE_PCT = 60` and
+  `BUDGET_PREMARKET_BORROW_PCT = 20` are percent points. A 0.60 vs 60
+  confusion is possible. Needs an ARCH amendment to normalize the names.
+- **Q4** — Unitless constants. `TACTICAL_2DTE = 3000`, `SHORT_TACTICAL = 5000`,
+  `SWING = 10000`, `LONGER_HORIZON = 30000` have no unit in the name. Confirm
+  the unit and rename in ARCH.
+- **Q5** — Approval-pending flags. `MIN_VEGA` has no `_APPROVAL_PENDING`
+  companion, and the generated docstring calls the pending set "C12
+  dealer/greeks" although it includes SPX, WAL, budget and newsletter
+  constants. Verify against ARCH V1 Sec AI.3, then fix
+  `scripts/gen_constants.py` if needed.
+- **Q7** — Structural constants location. `INT64_MIN/MAX`, `MICROS_PER_MILL`,
+  `DURATION_MS_MAX` and the suffix tuples live in `units.py`/`time.py`, not
+  `constants.py` (AGENTS rule 8). Confirm they are exempt, and check what
+  `scripts/check_constants.py` covers.
+- **Q10** — `_epoch_ns`. The naming rule accepts it but there is no nanosecond
+  type. Add `EpochNs` or drop the suffix.
 
 ## Resolved (2026-10-15)
 
@@ -71,32 +75,130 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - **C10** — baseline manifest. Belongs to feature 010 per ARCH Vol 2 §C.3.
 - **C12** — dealer/greeks formulas. Adopted from `openspec/formulas-dealer-greeks.md`; final validation lands with features 031/033/034/035/036.
 - **RQ-008** (feature 005) — AI.1/AI.2 named constants (BASE_RISK_PCT, PREMIUM_STOP_PCT, THETA_BUDGET_PCT, TIME_STOP_DAYS, VOLATILITY_EXIT_IVR) have no home in `domain/constants.py`: the 005 spec delta scopes generation to ARCH Vol 1 §AI.3 only (parser anchored on the last `^AI.3` header so changelog mentions cannot shift it). A feature that needs an AI.1/AI.2 constant must extend `scripts/gen_constants.py` deliberately. NON-BLOCKING.
-
 ## Rejected
 
 - **"Drop schedule jitter for provider access"** — violates ARCH Vol 3 §F.0.1a ("may only be strengthened"). Rejected 2026-10-15.
 - **"Exclude interaction emulation / mimicry / fingerprint"** — violates §F.A, §F.B, §F.H, §F.P. Rejected 2026-10-15.
 
-- **Q2** -- Floats in constants.py vs AGENTS rule 2. RESOLVED -- narrower rule.
-  Ban floats only for money/time/quantity/price (quantities with units).
-  Dimensionless [0,1] ratios (opposing_share, confluence_score, coverage caps,
-  calibrated_probability, loss_ratio) stay float. Do NOT blanket-convert to
-  ppm/bps -- that churns ~30 constants and forces formula rewrites. Record in
-  AGENTS.md as the interpretation of rule 2.
-- **Q11** -- Monotonic clock port. RESOLVED -- deferred.
-  No consumer needs a monotonic reading today. EpochMs remains wall-clock.
-  Add a separate MonotonicMs reading to the Clock port only when a
-  timing-sensitive path requires it.
-- **Q14** -- Dollars conversion for cents/mills. RESOLVED.
-  Conversion allowed ONLY inside designated kernels (flow strength D.14b,
-  FDI D.25, hedge pressure D.21) -- those formulas require
-  S = spot_micros / 1_000_000 before evaluating X_k / D_i. Renderers use a
-  separate display accessor. Banned everywhere else. Current spec text
-  ("dollars only at formula boundaries") already says this; no spec edit.
-- **Q15** -- pocs/interface/ drift. RESOLVED -- freeze as snapshot.
-  Create pocs/interface/README.md pointing to canonical files at repo root.
-  Do not delete (loses provenance). Do not sync (re-drifts).
-- **Q16** -- Unreviewed archived 005 items. RESOLVED -- deferred.
-  No blocking gaps surfaced during 005b implementation. Revisit if a future
-  change reveals an inconsistency with the archived 005 design, proposal,
-  or tasks.
+
+## Resolved (2026-10-16)
+
+- **Q1** — Wrapper strategy. RESOLVED (005a). Factory-only plus AST ban
+  shipped. `Cents`/`Micros`/`Mills` remain NewType aliases; direct construction
+  is banned outside `domain/units.py` and `domain/time.py` by
+  `tests/unit/test_direct_unit_construction.py`.
+
+- **Q2** -- Floats in `constants.py`. Decision: narrower rule. Ban floats only
+  for money/time/quantity/price. Dimensionless [0,1] ratios (opposing_share,
+  confluence_score, coverage caps, calibrated_probability, loss_ratio) stay
+  float. Do NOT blanket-convert to ppm/bps. To be written into AGENTS.md as
+  the interpretation of rule 2. Implementation deferred to 005c.
+
+- **Q6** -- Approval-pending constants. RESOLVED (005b). Added `approved(name)`
+  accessor in `src/quantflow/domain/constants.py` plus AST ban on direct reads
+  of pending names in `domain/**` and `kernels/**`. Tests:
+  `tests/unit/domain/test_constants_access.py`.
+
+- **Q8** -- Epoch ms plausible range. RESOLVED (005b). `EPOCH_MS_MIN =
+  1_262_304_000_000` (2010-01-01Z), `EPOCH_MS_MAX = 2_840_140_800_000`
+  (2060-01-01Z) in `src/quantflow/domain/time.py`. `epoch_ms()` rejects
+  out-of-range values with `UnitValueError`. Tests:
+  `tests/unit/domain/test_time.py`.
+
+- **Q9** -- `DURATION_MS_MAX = 2**31-1` (~24.86 days). RESOLVED -- no conflict.
+  SPEC Vol 4 Sec 18.14 lists cooldown values in SECONDS (behavioral-drift =
+  2592000 = 30 days; flow-state-change = 3600 = 1 hour). SPEC Vol 1 Sec 19.8.3
+  Rule 2 applies to `*_ms` duration columns, not to the cooldown config table.
+  Cooldowns are stored in seconds; DurationMs values in `*_duration_ms` columns
+  are sub-day in practice. No overflow.
+
+- **Q11** -- Monotonic clock port. RESOLVED -- deferred. No consumer needs a
+  monotonic reading today. `EpochMs` remains wall-clock. Add `MonotonicMs` to
+  the Clock port when a timing-sensitive path requires it (feature 014).
+
+- **Q12** -- Randomness and uuid. RESOLVED (005b). AST scan extended in
+  `tests/unit/test_wall_clock_scan.py`: `BANNED_MODULES` includes `random`,
+  `uuid`, `secrets`; `BANNED_CALL_NAMES` includes `getrandbits`, `randint`,
+  `random`, `randrange`, `uuid1`, `uuid4`, `urandom`.
+
+- **Q13** -- Ambiguous time field names. RESOLVED (005b). `field_name_kind`
+  raises `FieldNameError` when a name matches both epoch and duration patterns
+  (e.g. `epoch_latency_ms`). Code: `src/quantflow/domain/time.py`. Tests:
+  `tests/unit/domain/test_time.py`.
+
+- **Q14** -- Dollars conversion for cents/mills. Decision recorded. Conversion
+  allowed ONLY inside designated kernels (flow strength D.14b, FDI D.25, hedge
+  pressure D.21). Renderers use a separate display accessor. Banned elsewhere.
+  Current spec text already says this. **AST enforcement deferred to 005c.**
+
+- **Q15** -- `pocs/interface/` drift. RESOLVED -- freeze as snapshot.
+  `pocs/interface/README.md` created in commit `fc7a6a8` pointing to canonical
+  files at repo root. Do not delete (loses provenance). Do not sync
+  (re-drifts).
+
+- **Q16** -- Unreviewed archived 005 items. DEFERRED (not resolved). Archived
+  `design.md`, `proposal.md`, `tasks.md`, the domain-enums and repo-bootstrap
+  specs, `errors.py`, `ports/clock.py`, and the SPEC citations were not
+  reviewed. Revisit if a future change reveals an inconsistency.
+
+### 005c resolutions (2026-10-16)
+
+- **Q2** -- Narrow-float rule. IMPLEMENTED (005c). AGENTS.md rule 2 gained the
+  narrow-float interpretation: no floats for money/time/quantity/price;
+  dimensionless [0,1] ratios stay float; decision-path thresholds that gate a
+  state use integer `_PPM`; whole percent points use integer `_PCT`. The 11
+  fraction-valued `*_PCT` constants in ARCH V1 Sec AI.3 were renamed to
+  `*_RATIO` (D1). The `_PPM` migration of state-gating thresholds remains a
+  design follow-up.
+
+- **Q3** -- Suffix policy. RESOLVED (005c). `_PCT` = whole percent points (int),
+  `_PPM` = parts-per-million (int, decision path), `_RATIO` = dimensionless
+  [0,1] (float), `_PCTL` = integer percentile rank. Lint:
+  `tests/unit/domain/test_unit_suffix_lint.py` (registered-suffix set plus a
+  `{name: reason}` allowlist).
+
+- **Q4** -- Lane latency constants. RESOLVED (005c). The four `Sec AI.3` lane
+  constants were renamed to `LANE_LATENCY_CUTOFF_MS_2DTE`,
+  `LANE_LATENCY_CUTOFF_MS_SHORT_TACTICAL`, `LANE_LATENCY_CUTOFF_MS_SWING`,
+  `LANE_LATENCY_CUTOFF_MS_LONGER_HORIZON` (unit suffix carries the unit). DTE
+  lane *identifiers* elsewhere in ARCH V1 (Sec AI.1/AI.4/AI.5/AI.6) are
+  intentionally unchanged; the rename decouples the constant from the lane name.
+
+- **Q5** -- Generator + approval invariant. RESOLVED (005c).
+  `scripts/gen_constants.py` derives the pending-set label from the ARCH Sec
+  AI.3 `[RECOMMENDED ...]` marker (`parse_pending_label`);
+  `scripts/check_constants.py::verify_approval_companions` fails closed unless
+  every AI.3 constant is either approved (a value assignment) or carries a
+  `<NAME>_APPROVAL_PENDING` companion. Tests:
+  `tests/unit/test_constants_check.py`.
+
+- **Q7** -- Structural constants location. RESOLVED (005c) -- documentation only,
+  no code move. Structural constants (`INT64_MIN/MAX`, `MICROS_PER_MILL`,
+  `DURATION_MS_MAX`, `EPOCH_MS_MIN/MAX`, suffix tuples) stay in
+  `units.py`/`time.py` by design: they are type invariants, not tunable config,
+  and are exempt from the "named constants live once in ARCH V1 Sec AI.3" rule
+  (AGENTS rule 8). Exemption documented in AGENTS.md rule 8 and in the
+  `check_constants.py` module docstring.
+
+- **Q10** -- `_epoch_ns`. DEFERRED (not resolved) to feature 020, which handles
+  nanosecond timestamps. No `EpochNs` type is added in 005c.
+
+- **cooldown_until** -- RESOLVED (005c). `_until` added to `EPOCH_NAME_SUFFIXES`
+  in `src/quantflow/domain/time.py` and to SPEC V1 Sec 19.8.3 Rule 1, so
+  `cooldown_until`/`blocked_until`/`valid_until` classify as epoch. Test:
+  `tests/unit/domain/test_ddl_column_conformance.py`.
+
+- **random call-name regression** -- RESOLVED (005c). `random`, `randint` and
+  `randrange` were removed from `BANNED_CALL_NAMES` in
+  `tests/unit/test_wall_clock_scan.py` (they are not numpy
+  `Generator`/`RandomState` methods, so an injected generator's
+  `rng.random()`/`rng.normal()` must not be flagged); `getrandbits` is retained
+  as a call name and the `random` module ban is kept, so `import random` and
+  `from random import randint` still fail.
+
+- **F1 (005c follow-up)** — Stale `_PCT` references outside the 005c frozen scope.
+  `docs/reference/release-v2.0.5.1-v5.1.5.1/SPEC_v2.0.5.1_Vol3_Decision.md` lines
+  236 and 275 still cite `SPX_FALSE_CROSS_TOLERANCE_PCT` (0.0015) after the 005c
+  rename to `_RATIO`. Not in 005c's declared frozen scope (ARCH Vol 1 + SPEC Vol 1
+  §19.8.3 only). Follow-up change needed to align SPEC Vol 3 with the renamed
+  constant, or accept the drift as documentation-only. Non-blocking.

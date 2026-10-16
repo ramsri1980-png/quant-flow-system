@@ -5,6 +5,11 @@ outside domain/constants.py fails; an UPPER_SNAKE_CASE module-level constant
 not sourced from AI.3 fails unless it is a documented structural constant
 (STRUCTURAL_ALLOWLIST -- explicit, fail-closed for anything new).
 
+005c Q7: structural constants are exempt from the "named constants live once in
+ARCH V1 §AI.3" rule (AGENTS rule 8) because they are type invariants, not
+tunable config, and live in units.py/time.py by design. They are enumerated in
+STRUCTURAL_ALLOWLIST above; nothing else is exempt.
+
 Usage: python3 scripts/check_constants.py
 """
 
@@ -163,11 +168,55 @@ def verify_no_drift(arch_path: Path, module_path: Path) -> list[str]:
     return [f"{module_path} drifted from AI.3; constants: {drifted}"]
 
 
+def _module_assigned_names(module_path: Path) -> set[str]:
+    """Module-level assignment target names in the generated constants module."""
+    names: set[str] = set()
+    for node in ast.parse(module_path.read_text()).body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                names.add(target.id)
+    return names
+
+
+def verify_approval_companions(arch_path: Path, module_path: Path) -> list[str]:
+    """Fail closed unless every AI.3 constant is approved or marked pending.
+
+    005c Q5: a constant that is neither a value assignment (approved) nor
+    carries a <NAME>_APPROVAL_PENDING companion is an orphan and fails.
+    """
+    gen = _load_gen_constants()
+    entries = gen.parse_ai3_constants(arch_path.read_text())
+    assigned = _module_assigned_names(module_path)
+    violations: list[str] = []
+    for entry in entries:
+        companion = f"{entry.name}_APPROVAL_PENDING"
+        if entry.approval_pending:
+            if companion not in assigned:
+                violations.append(
+                    f"{module_path}: approval-pending constant {entry.name} "
+                    f"is missing its {companion} companion"
+                )
+        elif entry.name not in assigned:
+            violations.append(
+                f"{module_path}: AI.3 constant {entry.name} is neither approved "
+                f"(no value assignment) nor marked approval-pending ({companion}); "
+                "add it to AI.3 or mark it pending"
+            )
+        elif companion in assigned:
+            violations.append(
+                f"{module_path}: approved constant {entry.name} unexpectedly "
+                f"carries an {companion} companion"
+            )
+    return violations
+
+
 def main() -> int:
     """Run drift + duplicate/unsourced checks over the repo; exit 1 on fail."""
     gen = _load_gen_constants()
     generated = {c.name for c in gen.parse_ai3_constants(ARCH_VOL1.read_text())}
     violations = verify_no_drift(ARCH_VOL1, CONSTANTS_MODULE)
+    violations += verify_approval_companions(ARCH_VOL1, CONSTANTS_MODULE)
     violations += scan_source_tree(SRC_TREE, generated)
     for violation in violations:
         print(violation, file=sys.stderr)

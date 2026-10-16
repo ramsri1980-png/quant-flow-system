@@ -44,6 +44,18 @@ def test_epoch_ms_rejects_out_of_int64():
         epoch_ms(INT64_MIN - 1)
 
 
+def test_epoch_ms_rejects_bool():
+    # bool is an int subclass; it must be rejected like any other wrong type
+    # (units.checked_int raises TypeError).
+    with pytest.raises(TypeError):
+        epoch_ms(True)
+
+
+def test_duration_ms_rejects_bool():
+    with pytest.raises(TypeError):
+        duration_ms(False)
+
+
 # 005b Q8: plausible operational range [EPOCH_MS_MIN, EPOCH_MS_MAX]
 # (2010-01-01T00:00:00Z..2060-01-01T00:00:00Z), inclusive, enforced at
 # construction; catches seconds/micros silently passed as ms.
@@ -54,22 +66,22 @@ def test_epoch_ms_bounds_match_the_spec_dates():
 
 def test_seconds_passed_as_ms_are_rejected():
     # Plausible seconds-since-epoch (2023-11-14) is below the ms floor.
-    with pytest.raises(UnitValueError, match="EPOCH_MS_MIN"):
+    with pytest.raises(UnitValueError, match="below EPOCH_MS_MIN"):
         epoch_ms(1_700_000_000)
 
 
 def test_micros_passed_as_ms_are_rejected():
     # Plausible micros-since-epoch exceeds the ms ceiling.
-    with pytest.raises(UnitValueError, match="EPOCH_MS_MAX"):
+    with pytest.raises(UnitValueError, match="above EPOCH_MS_MAX"):
         epoch_ms(1_700_000_000_000_000)
 
 
 def test_epoch_ms_range_edges_are_inclusive():
     assert epoch_ms(EPOCH_MS_MIN) == EPOCH_MS_MIN
     assert epoch_ms(EPOCH_MS_MAX) == EPOCH_MS_MAX
-    with pytest.raises(UnitValueError, match="EPOCH_MS_MIN"):
+    with pytest.raises(UnitValueError, match="below EPOCH_MS_MIN"):
         epoch_ms(EPOCH_MS_MIN - 1)
-    with pytest.raises(UnitValueError, match="EPOCH_MS_MAX"):
+    with pytest.raises(UnitValueError, match="above EPOCH_MS_MAX"):
         epoch_ms(EPOCH_MS_MAX + 1)
 
 

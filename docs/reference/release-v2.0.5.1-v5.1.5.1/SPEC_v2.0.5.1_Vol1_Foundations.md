@@ -1403,8 +1403,9 @@ AE every zero_dte_cluster_outcomes row references a
        Enforced by a schema test with two rules:
 
        Rule 1 — Epoch timestamps. Column names matching
-       *_ts, *_at, *_epoch_ms, *_epoch_ns, or *epoch_*
-       MUST be BIGINT in DuckDB and INTEGER in SQLite.
+       *_ts, *_at, *_until, *_epoch_ms, *_epoch_ns, or
+       *epoch_* MUST be BIGINT in DuckDB and INTEGER in
+       SQLite.
        Failure to match is an error.
 
        Rule 2 — Bounded durations. Column names matching
