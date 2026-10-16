@@ -76,3 +76,27 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 
 - **"Drop schedule jitter for provider access"** — violates ARCH Vol 3 §F.0.1a ("may only be strengthened"). Rejected 2026-10-15.
 - **"Exclude interaction emulation / mimicry / fingerprint"** — violates §F.A, §F.B, §F.H, §F.P. Rejected 2026-10-15.
+
+- **Q2** -- Floats in constants.py vs AGENTS rule 2. RESOLVED -- narrower rule.
+  Ban floats only for money/time/quantity/price (quantities with units).
+  Dimensionless [0,1] ratios (opposing_share, confluence_score, coverage caps,
+  calibrated_probability, loss_ratio) stay float. Do NOT blanket-convert to
+  ppm/bps -- that churns ~30 constants and forces formula rewrites. Record in
+  AGENTS.md as the interpretation of rule 2.
+- **Q11** -- Monotonic clock port. RESOLVED -- deferred.
+  No consumer needs a monotonic reading today. EpochMs remains wall-clock.
+  Add a separate MonotonicMs reading to the Clock port only when a
+  timing-sensitive path requires it.
+- **Q14** -- Dollars conversion for cents/mills. RESOLVED.
+  Conversion allowed ONLY inside designated kernels (flow strength D.14b,
+  FDI D.25, hedge pressure D.21) -- those formulas require
+  S = spot_micros / 1_000_000 before evaluating X_k / D_i. Renderers use a
+  separate display accessor. Banned everywhere else. Current spec text
+  ("dollars only at formula boundaries") already says this; no spec edit.
+- **Q15** -- pocs/interface/ drift. RESOLVED -- freeze as snapshot.
+  Create pocs/interface/README.md pointing to canonical files at repo root.
+  Do not delete (loses provenance). Do not sync (re-drifts).
+- **Q16** -- Unreviewed archived 005 items. RESOLVED -- deferred.
+  No blocking gaps surfaced during 005b implementation. Revisit if a future
+  change reveals an inconsistency with the archived 005 design, proposal,
+  or tasks.
