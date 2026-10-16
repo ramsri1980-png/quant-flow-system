@@ -165,6 +165,7 @@
 - [pocs/interface/.opencode/playbooks/08-quantflow-units-purity.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/.opencode/playbooks/08-quantflow-units-purity.md)
 - [pocs/interface/.opencode/playbooks/09-quantflow-spec-authoring.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/.opencode/playbooks/09-quantflow-spec-authoring.md)
 - [pocs/interface/AGENTS.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/AGENTS.md)
+- [pocs/interface/README.md](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/README.md)
 - [pocs/interface/opencode.json](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/opencode.json)
 - [pocs/interface/openspec/changes/archive/.gitkeep](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/openspec/changes/archive/.gitkeep)
 - [pocs/interface/openspec/config.yaml](https://github.com/ramsri1980-png/quant-flow-system/blob/master/pocs/interface/openspec/config.yaml)
