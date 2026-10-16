@@ -121,6 +121,10 @@ def build_current_state():
     ]
     return "\n".join(lines)
 
+PHASE_NOTES = {
+    "E7": "transport primitives proven by POC",
+}
+
 
 def build_overall_progress():
     by_phase = {}
@@ -154,8 +158,15 @@ def build_overall_progress():
         "| Phase | Sessions | Status |",
         "|---|---|---|",
         *rows,
-        "",
     ]
+
+    if PHASE_NOTES:
+        lines.append("")
+        lines.append("**Phase notes:**")
+        for code, note in sorted(PHASE_NOTES.items()):
+            lines.append(f"- {code}: {note}")
+
+    lines.append("")
     return "\n".join(lines)
 
 

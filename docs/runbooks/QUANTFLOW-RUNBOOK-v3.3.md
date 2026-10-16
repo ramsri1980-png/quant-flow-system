@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-16T16:33:30Z)
+## CURRENT STATE (auto 2026-10-16T17:13:00Z)
 
 | Item | Status |
 |---|---|
@@ -20,9 +20,9 @@
 | Feature 005 | COMPLETE — tag `feature-005-complete` |
 | Feature 005a | COMPLETE — tag `feature-005a-complete` |
 | Repo | branch `feature/005a-domain-hardening` |
-| Working tree | M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md |
+| Working tree | M scripts/update_runbook.py |
 | Tags | `feature-005-complete`, `feature-005a-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `06a1259 docs: runbook auto-update after feature 005a` |
+| Last commit | `b72e1bb chore(runbook): auto-refresh top state tables from git + openspec` |
 
 **Next action:** Feature 010 — migration runner
 
@@ -84,6 +84,9 @@
 | E6 User Workflows | 36–42 | ⬜ Not started |
 | E7 Interface, Ops & Release | 43–48 | ⬜ Not started |
 | E8 Forward Research | 49+ | ⬜ Not started |
+
+**Phase notes:**
+- E7: transport primitives proven by POC
 
 <!-- AUTO:OVERALL-PROGRESS:END -->
 
@@ -1483,4 +1486,27 @@ M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
  M scripts/update_runbook.py
 ?? docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md.bak-markers-1792167817
 ?? scripts/update_runbook.py.bak-1792167846
+```
+
+### Runbook auto-update - 2026-10-16T17:13:00Z
+
+Branch: `feature/005a-domain-hardening`
+
+Recent commits:
+```
+b72e1bb chore(runbook): auto-refresh top state tables from git + openspec
+06a1259 docs: runbook auto-update after feature 005a
+3e3afc5 chore(opencode): bump qf-build steps 30 -> 50 for multi-task apply runs
+04cf0bf feat(005a): domain hardening — review fixes for 005
+04ba126 Update repo index
+1ecc637 Add GitHub Actions workflow for repo index generation
+1cebdaa merge: feature 005 complete
+696f18e docs: runbook auto-update after feature 005 archive
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+```
+
+Working tree:
+```
+M scripts/update_runbook.py
 ```
