@@ -43,8 +43,8 @@ yet; covered by wall-clock AST scan), temp-paths-only.
 ## 2. epoch-clock (red tests first)
 
 - [x] 2.1 Golden/boundary: EpochMs constructs from int, rejects float and
-  out-of-int64; DurationMs rejects negative and > DURATION_MS_MAX (RQ-007;
-  64-bit BIGINT parity, no int32 bound)
+  out-of-int64; DurationMs rejects negative and > DURATION_MS_MAX, RQ-007:
+  64-bit BIGINT parity, no int32 type bound (structural value 2**31-1)
 - [x] 2.2 Duplicate/idempotency: naming-rule test fails on an ambiguous
   `*_ms` field name and passes on `*_ts`/`*_at`/`*_epoch_ms`/
   `*staleness_ms`/`*duration_ms` (exercise the rule with synthetic classes)
@@ -58,9 +58,10 @@ yet; covered by wall-clock AST scan), temp-paths-only.
 - [x] 2.6 Implement `src/quantflow/domain/time.py` +
   `src/quantflow/ports/clock.py` until 2.1-2.5 green
   Done 2026-10-15: plus `src/quantflow/adapters/clock.py` (SystemClock, per
-  design decision 3) and `FieldNameError` in `domain/errors.py`;
-  DURATION_MS_MAX = 2**31-1 in `domain/time.py` (SPEC V1 §19.8.3 Rule 2
-  column-safe bound). 21 tests green; ruff + mypy --strict clean.
+  design decision 3) and `FieldNameError` in `domain/errors.py`; no int32
+  type bound (structural value 2**31-1): `DURATION_MS_MAX` enforced in
+  `domain/time.py` (SPEC V1 §19.8.3 Rule 2 column-safe bound).
+  21 tests green; ruff + mypy --strict clean.
 
 ## 3. domain-enums (red tests first)
 
@@ -179,6 +180,28 @@ decisions 5-6 updated to match the broader scan and the set-equality check.
   untouched (still `DURATION_MS_MAX = 2**31 - 1`, enforced at construction).
 
 Verification 2026-10-16 (group 7): red fixture confirmed failing first, then
+green; `uv run pytest -q` 137 passed; `uv run ruff check` green on 005 scope;
+`uv run ruff format --check` green on touched files; `uv run mypy --strict
+src/quantflow` 27 files clean.
+
+## 8. Review remediation (qf-review round 3 MINORs, 2026-10-16)
+
+- [x] 8.1 Wall-clock scan also flags `from quantflow import adapters`
+  (ImportFrom with `node.module == "quantflow"` and an alias named
+  `adapters`) under domain/** and kernels/**; added to the existing
+  `test_scan_detects_adapter_imports_fixture` (red first in
+  tests/unit/test_wall_clock_scan.py)
+  Done 2026-10-16: red fixture (`2 == 3`) then green; new ImportFrom branch
+  after `_is_adapters_module` with an exact alias-name check; violation
+  message keeps the `quantflow.adapters` token the fixture filters on;
+  real tree still clean (no such import exists).
+- [x] 8.2 tasks.md group 2 wording aligned with the 7.2 requalification
+  (cosmetic; no code or spec change): 2.1 and the 2.6 Done note say "no
+  int32 type bound (structural value 2**31-1)"
+  Done 2026-10-16: both spots reworded; spec delta, RQ-007, and
+  `domain/time.py` docstring already matched, so no further edits needed.
+
+Verification 2026-10-16 (group 8): red fixture confirmed failing first, then
 green; `uv run pytest -q` 137 passed; `uv run ruff check` green on 005 scope;
 `uv run ruff format --check` green on touched files; `uv run mypy --strict
 src/quantflow` 27 files clean.

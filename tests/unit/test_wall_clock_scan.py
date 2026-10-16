@@ -53,6 +53,15 @@ def find_wall_clock_violations(path: Path) -> list[str]:
                     f"{path}:{node.lineno} from {node.module} import "
                     "(adapters banned in domain/kernels: inject a Clock)"
                 )
+            elif node.module == "quantflow" and any(
+                alias.name == "adapters" for alias in node.names
+            ):
+                # "from quantflow import adapters" reaches the same concrete
+                # clocks without the quantflow.adapters prefix (task 8.1)
+                violations.append(
+                    f"{path}:{node.lineno} from {node.module} import adapters "
+                    "(quantflow.adapters banned in domain/kernels: inject a Clock)"
+                )
     return violations
 
 
@@ -82,13 +91,15 @@ def test_scan_detects_deliberately_bad_fixture(tmp_path):
     assert len(violations) >= 4, violations
 
 
-# 7.1 Red fixture: domain/kernels may never import a concrete clock
+# 7.1/8.1 Red fixture: domain/kernels may never import a concrete clock
 # (design decision 3; spec epoch-clock "No clock is reachable without
 # injection" -- an adapters import reaches ambient time without injection)
 def test_scan_detects_adapter_imports_fixture(tmp_path):
     bad = tmp_path / "bad_fixture.py"
     bad.write_text(
-        "from quantflow.adapters.clock import SystemClock\nimport quantflow.adapters.mcp.server\n"
+        "from quantflow.adapters.clock import SystemClock\n"
+        "import quantflow.adapters.mcp.server\n"
+        "from quantflow import adapters\n"
     )
     violations = find_wall_clock_violations(bad)
-    assert sum("quantflow.adapters" in v for v in violations) == 2, violations
+    assert sum("quantflow.adapters" in v for v in violations) == 3, violations

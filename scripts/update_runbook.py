@@ -2,7 +2,7 @@
 """Update runbook with current branch, recent commits, tree status.
 Idempotent. Run after each git push (or via qfpush alias)."""
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -10,14 +10,14 @@ RUNBOOK = (REPO / "docs" / "runbooks" / "QUANTFLOW-RUNBOOK.md").resolve()
 
 
 def sh(*args):
-    return subprocess.check_output(args, text=True, cwd=REPO).strip()
+    return subprocess.check_output(args, text=True, cwd=REPO).strip()  # noqa: S603
 
 
 def main():
     branch = sh("git", "branch", "--show-current")
     log = sh("git", "log", "--oneline", "-10")
     status = sh("git", "status", "--short") or "(clean)"
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     block = "\n".join([
         "",
