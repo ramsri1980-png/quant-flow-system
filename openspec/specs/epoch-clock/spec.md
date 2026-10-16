@@ -10,8 +10,13 @@ reads out of domain and kernel code.
 ### Requirement: Timestamps are UTC epoch milliseconds
 All timestamps SHALL be UTC epoch milliseconds carried as integers. Storage
 correspondence: SQLite INTEGER (64-bit), DuckDB BIGINT; no DuckDB TIMESTAMP.
+Epoch ms values SHALL additionally be bounded to a plausible operational
+range `[EPOCH_MS_MIN, EPOCH_MS_MAX]` (2010-01-01T00:00:00Z to
+2060-01-01T00:00:00Z) enforced at construction; values outside the range
+SHALL fail closed, catching silent unit confusion (seconds or micros).
 Source: SPEC V1 Sec 19.8.3 ("Timestamps UTC epoch ms. SQLite: INTEGER
-(64-bit). DuckDB: BIGINT"); SPEC V2 Sec 19.6 invariant W; constitution Sec 4.
+(64-bit). DuckDB: BIGINT"); SPEC V2 Sec 19.6 invariant W; constitution Sec
+4; 005a review Q8.
 
 #### Scenario: Float timestamp is rejected
 - **WHEN** a float is passed where an epoch-ms value is required
@@ -21,6 +26,21 @@ Source: SPEC V1 Sec 19.8.3 ("Timestamps UTC epoch ms. SQLite: INTEGER
 - **WHEN** an epoch-ms value outside signed 64-bit range is constructed
 - **THEN** construction fails explicitly (fail closed, no wrap)
 
+#### Scenario: Seconds passed as ms are rejected
+- **WHEN** a plausible seconds-since-epoch value (e.g. 1_700_000_000) is
+  passed where ms are required
+- **THEN** construction raises a range error
+
+#### Scenario: Micros passed as ms are rejected
+- **WHEN** a plausible micros-since-epoch value (e.g. 1_700_000_000_000_000)
+  is passed where ms are required
+- **THEN** construction raises a range error
+
+#### Scenario: Range edges are inclusive
+- **WHEN** an epoch-ms value equal to `EPOCH_MS_MIN` or `EPOCH_MS_MAX` is
+  constructed
+- **THEN** construction succeeds
+
 ### Requirement: Epoch vs duration naming rule
 Field names matching `*_ts`, `*_at`, `*_epoch_ms`, `*_epoch_ns`, or `*epoch_*`
 SHALL be epoch values. Field names matching `*latency_ms`, `*staleness_ms`,
@@ -28,10 +48,14 @@ SHALL be epoch values. Field names matching `*latency_ms`, `*staleness_ms`,
 carried as integers. A `*` in these patterns means an underscore-delimited
 prefix: a name matches a duration suffix only if it equals the suffix or ends
 with `_` plus the suffix. Names matching `_ms` without a duration or epoch
-qualifier SHALL be rejected as ambiguous. A schema-style rule test SHALL
-verify this for every typed field name this feature introduces.
+qualifier SHALL be rejected as ambiguous. Names that match BOTH an epoch
+pattern and a duration pattern (for example `epoch_latency_ms`) SHALL be
+rejected as ambiguous; silent precedence is not permitted. A schema-style
+rule test SHALL verify this for every typed field name this feature
+introduces.
 Source: SPEC V1 Sec 19.8.3 Rule 1 and Rule 2 ("Ambiguous names (e.g., *_ms
-without a duration qualifier) fail the test and require an explicit rename").
+without a duration qualifier) fail the test and require an explicit
+rename"); 005a review Q13.
 
 #### Scenario: Ambiguous `_ms` name fails
 - **WHEN** a field named e.g. `elapsed_ms_wait` (no recognized qualifier) is
@@ -46,6 +70,11 @@ without a duration qualifier) fail the test and require an explicit rename").
 #### Scenario: Underscore-delimited duration suffix matches
 - **WHEN** a field named `quote_age_ms` is classified
 - **THEN** the naming rule returns `duration`
+
+#### Scenario: Name matching both patterns is rejected
+- **WHEN** a field named `epoch_latency_ms` is classified (matches `*epoch_*`
+  and `*latency_ms`)
+- **THEN** the naming rule raises a field-name error (ambiguous)
 
 #### Scenario: Duration values are BIGINT-parity with a validated maximum
 - **WHEN** a duration value is constructed that is negative or exceeds
@@ -73,14 +102,15 @@ Clock port (or an `as_of` parameter); direct wall-clock reads in
 `src/quantflow/domain/**` and `src/quantflow/kernels/**` SHALL fail an AST
 lint test. The AST scan SHALL reject the banned call names (`now`, `utcnow`,
 `today`, `monotonic`, `time`, `time_ns`, `monotonic_ns`, `perf_counter`,
-`perf_counter_ns`, `process_time`, `process_time_ns`, `urandom`), the banned
-modules (`time`, `datetime`, `secrets`), concrete `quantflow.adapters.*`
-imports, and relative imports (`from .` / `from ..`). Randomness, if any is
-introduced later, SHALL be as_of-seeded only; `random` / `uuid` enforcement is
-deferred (Q12).
-Source: SPEC V1 Sec 2.9.4.2 ("No wall-clock reads except as_of"), Sec 2.9.4.3,
-Sec 2.9.4.8 (AST lint pattern); constitution Sec 5; 005a review (scan
-hardening).
+`perf_counter_ns`, `process_time`, `process_time_ns`, `urandom`,
+`getrandbits`, `randint`, `random`, `randrange`, `uuid1`, `uuid4`), the
+banned modules (`time`, `datetime`, `secrets`, `random`, `uuid`), concrete
+`quantflow.adapters.*` imports, and relative imports (`from .` / `from ..`).
+Randomness SHALL be as_of-seeded only; the AST scan enforces this by
+rejecting the `random` and `uuid` modules outright.
+Source: SPEC V1 Sec 2.9.4.2 ("No wall-clock reads except as_of"), Sec
+2.9.4.3, Sec 2.9.4.8 (AST lint pattern); constitution Sec 5; 005a review
+(scan hardening + Q12).
 
 #### Scenario: Wall-clock read in domain fails the AST test
 - **WHEN** `datetime.now()`, `time.time()`, or equivalent is called directly in
@@ -107,3 +137,9 @@ hardening).
   `test_scan_detects_secrets_import` (1 hit), and
   `test_scan_detects_relative_imports` (2 hits) in
   `tests/unit/test_wall_clock_scan.py`
+
+#### Scenario: Random and uuid imports are rejected
+- **WHEN** a domain or kernel module imports `random` or `uuid`, or calls
+  `random.randint`, `random.randrange`, `random.getrandbits`,
+  `secrets.token_hex`, `uuid.uuid1`, or `uuid.uuid4`
+- **THEN** the AST scan reports a violation for each shape
