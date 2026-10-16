@@ -1377,3 +1377,26 @@ Working tree:
 ```
 (clean)
 ```
+
+### Runbook auto-update - 2026-10-16T16:08:20Z
+
+Branch: `feature/005a-domain-hardening`
+
+Recent commits:
+```
+3e3afc5 chore(opencode): bump qf-build steps 30 -> 50 for multi-task apply runs
+04cf0bf feat(005a): domain hardening — review fixes for 005
+04ba126 Update repo index
+1ecc637 Add GitHub Actions workflow for repo index generation
+1cebdaa merge: feature 005 complete
+696f18e docs: runbook auto-update after feature 005 archive
+fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+6a2b7f5 archive(005): domain-types-units-clock — specs synced to main
+be1588a docs: runbook auto-update after feature 005 review cycles
+cbccc7e fix(005): close round-3 review MINORs + tidy update_runbook.py
+```
+
+Working tree:
+```
+(clean)
+```
