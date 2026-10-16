@@ -28,6 +28,25 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 - Offsite backup target: ARCH V1 says rclone crypt → B2/R2; runbook uses MEGA for the LUKS header only.
 - Provider payload schemas and raw_color → normalized_meaning mapping tables: need fixtures.
 
+### Open questions from brief 005a (recorded 2026-10-16; recommended option first; NONE implemented — resolve in 005b or the consuming feature)
+
+- **Q1** — Wrapper strategy. Default in 1.2 of 005a is factory-only plus AST ban (implemented). Alternative: make wrappers int subclasses with a validating `__new__` (also needs arithmetic rules so `Cents + Micros` raises). Confirm.
+- **Q2** — Floats in `constants.py`. Thresholds like `DEALER_COVERAGE_MIN = 0.80`, `SPX_*_PCT`, weights, and `MIN_VEGA` are floats, but AGENTS rule 2 says no floats in the decision path. Options: declare them analysis-side only, or restate as integers (for example ppm) via an ARCH V1 §AI.3 amendment.
+- **Q3** — `_PCT` semantics. `SPX_FALSE_CROSS_TOLERANCE_PCT = 0.0015` is a fraction, but `BUDGET_FLOW_ALERT_RESERVE_PCT = 60` and `BUDGET_PREMARKET_BORROW_PCT = 20` are percent points. A 0.60 vs 60 confusion is possible. Needs an ARCH amendment to normalize the names.
+- **Q4** — Unitless constants. `TACTICAL_2DTE = 3000`, `SHORT_TACTICAL = 5000`, `SWING = 10000`, `LONGER_HORIZON = 30000` have no unit in the name. Confirm the unit and rename in ARCH.
+- **Q5** — Approval-pending flags. `MIN_VEGA` has no `_APPROVAL_PENDING` companion, and the generated docstring calls the pending set "C12 dealer/greeks" although it includes SPX, WAL, budget and newsletter constants. Verify against ARCH V1 §AI.3, then fix `scripts/gen_constants.py` if needed.
+- **Q6** — Enforcing approval-pending. Nothing stops a kernel from using a pending constant. Option: an accessor that raises unless approved, or a lint test.
+- **Q7** — Structural constants location. `INT64_MIN/MAX`, `MICROS_PER_MILL`, `DURATION_MS_MAX` and the suffix tuples live in `units.py`/`time.py`, not `constants.py` (AGENTS rule 8). Confirm they are exempt, and check what `scripts/check_constants.py` covers.
+- **Q8** — Plausible epoch range. `epoch_ms` accepts any int64, so seconds (~1.7e9) or microseconds pass silently. Operator must supply min/max bounds.
+- **Q9** — `DURATION_MS_MAX = 2**31-1` is about 24.86 days; an `age_ms` over that fails construction. Confirm intended.
+- **Q10** — `_epoch_ns`. The naming rule accepts it but there is no nanosecond type. Add `EpochNs` or drop the suffix.
+- **Q11** — Clock port. `time.time_ns()` is not monotonic. Decide whether the port needs a monotonic reading for durations.
+- **Q12** — Randomness and uuid. Constitution allows only as_of-seeded randomness. Decide how to lint `random`, `uuid`, `os.urandom` in `domain/**` and `kernels/**`.
+- **Q13** — Name matches both epoch and duration (for example `epoch_latency_ms`): currently returns "epoch". Should it be rejected as ambiguous?
+- **Q14** — Dollars conversion for cents/mills. Confirm whether any formula converts them, and with what divisor.
+- **Q15** — `pocs/interface/` drift. It duplicates `AGENTS.md`, `.opencode/`, and `openspec/` and already differs (it lacks `041b-evaluation-protocol.md`). Freeze it as a POC snapshot, delete it, or sync it.
+- **Q16** — Unreviewed items. The archived 005 `design.md`, `proposal.md`, `tasks.md`, the domain-enums and repo-bootstrap specs, `errors.py`, `ports/clock.py`, and the SPEC citations were not reviewed. Verify them.
+
 
 ## Resolved (2026-10-15)
 

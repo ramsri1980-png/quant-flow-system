@@ -42,10 +42,24 @@ def duration_ms(value: object, *, field: str = "duration_ms") -> DurationMs:
     return DurationMs(checked)
 
 
+def _has_token_suffix(name: str, suffixes: tuple[str, ...]) -> bool:
+    """True when name equals a suffix or ends with "_" + that suffix.
+
+    Token-boundary match: "message_ms" ends with the letters of "age_ms" but
+    not on a token boundary, so it is not a duration match (SPEC V1 §19.8.3).
+    """
+    return any(name == suffix or name.endswith("_" + suffix) for suffix in suffixes)
+
+
+def _is_epoch_name(name: str) -> bool:
+    """True for an epoch name: suffix, "epoch_" prefix, or "_epoch_" token."""
+    return name.endswith(EPOCH_NAME_SUFFIXES) or name.startswith("epoch_") or "_epoch_" in name
+
+
 def field_name_kind(name: str) -> FieldNameKind:
     """Classify a time field name per SPEC V1 §19.8.3 Rules 1-2; else reject."""
-    if name.endswith(EPOCH_NAME_SUFFIXES) or "epoch_" in name:
+    if _is_epoch_name(name):
         return "epoch"
-    if name.endswith(DURATION_NAME_SUFFIXES):
+    if _has_token_suffix(name, DURATION_NAME_SUFFIXES):
         return "duration"
     raise FieldNameError(f"{name}: ambiguous time field name; rename per SPEC V1 §19.8.3")

@@ -6,7 +6,7 @@ kernels/ (enforced by the wall-clock AST scan, tests/unit/test_wall_clock_scan.p
 
 import time
 
-from quantflow.domain.time import EpochMs
+from quantflow.domain.time import EpochMs, epoch_ms
 
 
 class SystemClock:
@@ -14,4 +14,4 @@ class SystemClock:
 
     def now_ms(self) -> EpochMs:
         """Current UTC epoch ms from the OS clock (integer, no float)."""
-        return EpochMs(time.time_ns() // 1_000_000)
+        return epoch_ms(time.time_ns() // 1_000_000, field="now_ms")

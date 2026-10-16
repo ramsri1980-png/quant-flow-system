@@ -134,3 +134,36 @@ def test_rounding_behavior_is_not_invented_per_formula():
     # The single global rule: deterministic half-even, same result every call.
     assert micros_to_mills(Micros(1500)) == micros_to_mills(Micros(1500)) == 2
     assert micros_to_mills(Micros(2500)) == micros_to_mills(Micros(2500)) == 2
+
+
+# 1.8 (005a) Fail closed: the converter validates its input like the factories
+@pytest.mark.parametrize("bad", [1500.9, 1500.0, True, "1500", None])
+def test_micros_to_mills_rejects_non_int(bad):
+    with pytest.raises(TypeError):
+        micros_to_mills(bad)  # type: ignore[arg-type]
+
+
+def test_micros_to_mills_rejects_out_of_range():
+    with pytest.raises(UnitValueError):
+        micros_to_mills(2**63)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("micros_in", "mills_out"),
+    [
+        (0, 0),
+        (499, 0),
+        (500, 0),
+        (501, 1),
+        (1499, 1),
+        (1500, 2),
+        (1501, 2),
+        (2500, 2),
+        (-500, 0),
+        (-501, -1),
+        (-1500, -2),
+        (-2500, -2),
+    ],
+)
+def test_micros_to_mills_half_even(micros_in, mills_out):
+    assert micros_to_mills(micros_in) == mills_out  # type: ignore[arg-type]
