@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-16T17:13:59Z)
+## CURRENT STATE (auto 2026-10-16T17:18:27Z)
 
 | Item | Status |
 |---|---|
@@ -19,10 +19,10 @@
 | Session 3 (OpenCode + OpenSpec zero-token setup) | COMPLETE |
 | Feature 005 | COMPLETE — tag `feature-005-complete` |
 | Feature 005a | COMPLETE — tag `feature-005a-complete` |
-| Repo | branch `feature/005a-domain-hardening` |
+| Repo | branch `master` |
 | Working tree | clean |
 | Tags | `feature-005-complete`, `feature-005a-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `bc43669 chore(runbook): preserve per-phase notes below OVERALL PROGRESS table` |
+| Last commit | `dd5e006 Update repo index` |
 
 **Next action:** Feature 010 — migration runner
 
@@ -1527,6 +1527,29 @@ b72e1bb chore(runbook): auto-refresh top state tables from git + openspec
 1cebdaa merge: feature 005 complete
 696f18e docs: runbook auto-update after feature 005 archive
 fb2db35 chore: ruff format pre-existing files (POC carry-forward + runbook script)
+```
+
+Working tree:
+```
+(clean)
+```
+
+### Runbook auto-update - 2026-10-16T17:18:27Z
+
+Branch: `master`
+
+Recent commits:
+```
+dd5e006 Update repo index
+058213b merge: feature 005a complete
+6f60204 docs: runbook auto-update after feature 005a tag
+bc43669 chore(runbook): preserve per-phase notes below OVERALL PROGRESS table
+b72e1bb chore(runbook): auto-refresh top state tables from git + openspec
+06a1259 docs: runbook auto-update after feature 005a
+3e3afc5 chore(opencode): bump qf-build steps 30 -> 50 for multi-task apply runs
+04cf0bf feat(005a): domain hardening — review fixes for 005
+04ba126 Update repo index
+1ecc637 Add GitHub Actions workflow for repo index generation
 ```
 
 Working tree:
