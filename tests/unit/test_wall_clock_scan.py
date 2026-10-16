@@ -27,8 +27,15 @@ BANNED_CALL_NAMES = {
     "process_time",
     "process_time_ns",
     "urandom",
+    # 005b Q12: randomness is as_of-seeded only; ban the shapes outright.
+    "getrandbits",
+    "randint",
+    "random",
+    "randrange",
+    "uuid1",
+    "uuid4",
 }
-BANNED_MODULES = {"time", "datetime", "secrets"}
+BANNED_MODULES = {"time", "datetime", "secrets", "random", "uuid"}
 BANNED_ADAPTER_PREFIX = "quantflow.adapters"
 
 
@@ -157,3 +164,37 @@ def test_scan_detects_secrets_import(tmp_path):
     bad = tmp_path / "bad_fixture.py"
     bad.write_text("import secrets\n")
     assert len(find_wall_clock_violations(bad)) == 1
+
+
+# 005b Q12: randomness ban (spec epoch-clock "Random and uuid imports are
+# rejected"). All three imports plus every banned call shape in one fixture;
+# secrets.token_hex is caught by the banned secrets module import.
+def test_scan_detects_random_and_uuid_shapes(tmp_path):
+    bad = tmp_path / "bad_fixture.py"
+    bad.write_text(
+        "import random\n"
+        "import uuid\n"
+        "import secrets\n"
+        "\n"
+        "\n"
+        "def f():\n"
+        "    return (\n"
+        "        random.randint(0, 1)\n"
+        "        + random.randrange(2)\n"
+        "        + random.getrandbits(8)\n"
+        "        + secrets.token_hex(8)\n"
+        "        + uuid.uuid1()\n"
+        "        + uuid.uuid4()\n"
+        "    )\n"
+    )
+    violations = find_wall_clock_violations(bad)
+    # 3 banned imports + 5 banned call names (token_hex: module-banned).
+    assert len(violations) == 8, violations
+
+
+def test_scan_detects_random_and_uuid_from_imports(tmp_path):
+    bad = tmp_path / "bad_fixture.py"
+    bad.write_text(
+        "from random import randint\nfrom uuid import uuid4\nfrom secrets import token_hex\n"
+    )
+    assert len(find_wall_clock_violations(bad)) == 3

@@ -97,6 +97,29 @@ def parse_ai3_constants(text: str) -> list[Constant]:
     return entries
 
 
+ACCESSOR_BLOCK_TEMPLATE = '''
+# --- approved(name) accessor (005b Q6): fail-closed constant reads ---
+# Values table references approved names only; pending names are reachable
+# solely through the *_APPROVAL_PENDING flags above (never as a value).
+_VALUES: dict[str, int | float] = {{
+{values}}}
+_PENDING_NAMES: frozenset[str] = frozenset(
+    {{
+{pending}    }}
+)
+
+
+def approved(name: str) -> int | float:
+    """Return the constant value only when the name is approved (fail closed)."""
+    if name in _PENDING_NAMES:
+        raise ConstantsError(f"{{name}}: approval pending; read denied until operator approval")
+    try:
+        return _VALUES[name]
+    except KeyError:
+        raise ConstantsError(f"{{name}}: unknown constant") from None
+'''
+
+
 def render_constants_module(entries: list[Constant]) -> str:
     """Render the generated module; ruff-format-stable, deterministic."""
     header = (
@@ -108,19 +131,27 @@ def render_constants_module(entries: list[Constant]) -> str:
         'Approval-pending companions mark the AI.3 "[RECOMMENDED ... approval]"\n'
         "set (C12 dealer/greeks): features 031-036 require recorded operator\n"
         "approval before relying on them (never silently adopted; shadow-only\n"
-        "per constitution Sec 7).\n"
+        "per constitution Sec 7). Read constants via approved(name): pending\n"
+        "and unknown names raise ConstantsError (SPEC V1 §1.4.33, 005b Q6).\n"
         '"""\n'
+        "\n"
+        "from quantflow.domain.errors import ConstantsError\n"
     )
     body = "".join(f"{c.name} = {c.value}\n" for c in entries)
     pending_entries = [c for c in entries if c.approval_pending]
     pending_block = ""
+    accessor_block = ""
     if pending_entries:
         pending_block = (
             "\n"
             "# --- AI.3 [RECOMMENDED ... approval] set (C12): approval pending ---\n"
             + "".join(f"{c.name}_APPROVAL_PENDING = True\n" for c in pending_entries)
         )
-    return header + "\n" + body + pending_block
+        approved_entries = [c for c in entries if not c.approval_pending]
+        values = "".join(f'    "{c.name}": {c.name},\n' for c in approved_entries)
+        pending_names = "".join(f'        "{c.name}",\n' for c in pending_entries)
+        accessor_block = ACCESSOR_BLOCK_TEMPLATE.format(values=values, pending=pending_names)
+    return header + "\n" + body + pending_block + accessor_block
 
 
 def generate(arch_path: Path = ARCH_VOL1) -> str:

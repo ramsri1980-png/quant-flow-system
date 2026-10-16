@@ -14,6 +14,13 @@ from quantflow.domain.units import checked_int
 
 DURATION_MS_MAX = 2**31 - 1
 
+# Plausible operational range for UTC epoch ms, inclusive (SPEC V1 §19.8.3;
+# 005b Q8): 2010-01-01T00:00:00Z..2060-01-01T00:00:00Z. Generous against
+# every SPEC lookback (3-year COT, 252-day IVR, 5-year retention); values
+# outside are unit confusion (seconds/micros as ms) and fail closed.
+EPOCH_MS_MIN = 1262304000000
+EPOCH_MS_MAX = 2840140800000
+
 EPOCH_NAME_SUFFIXES = ("_ts", "_at", "_epoch_ms", "_epoch_ns")
 DURATION_NAME_SUFFIXES = (
     "latency_ms",
@@ -31,7 +38,10 @@ FieldNameKind = Literal["epoch", "duration"]
 
 def epoch_ms(value: object, *, field: str = "epoch_ms") -> EpochMs:
     """Construct a UTC epoch-ms value from validated boundary input."""
-    return EpochMs(checked_int(value, field=field))
+    checked = checked_int(value, field=field)
+    if checked < EPOCH_MS_MIN or checked > EPOCH_MS_MAX:
+        raise UnitValueError(f"{field}: {checked} outside EPOCH_MS_MIN..EPOCH_MS_MAX")
+    return EpochMs(checked)
 
 
 def duration_ms(value: object, *, field: str = "duration_ms") -> DurationMs:
@@ -57,9 +67,21 @@ def _is_epoch_name(name: str) -> bool:
 
 
 def field_name_kind(name: str) -> FieldNameKind:
-    """Classify a time field name per SPEC V1 §19.8.3 Rules 1-2; else reject."""
-    if _is_epoch_name(name):
+    """Classify a time field name per SPEC V1 §19.8.3 Rules 1-2; else reject.
+
+    A name matching both an epoch and a duration pattern (e.g.
+    epoch_latency_ms) is ambiguous and raises; silent precedence is not
+    permitted (005b Q13, design D3).
+    """
+    epoch = _is_epoch_name(name)
+    duration = _has_token_suffix(name, DURATION_NAME_SUFFIXES)
+    if epoch and duration:
+        raise FieldNameError(
+            f"{name}: ambiguous time field name (matches epoch and duration patterns); "
+            "rename per SPEC V1 §19.8.3"
+        )
+    if epoch:
         return "epoch"
-    if _has_token_suffix(name, DURATION_NAME_SUFFIXES):
+    if duration:
         return "duration"
     raise FieldNameError(f"{name}: ambiguous time field name; rename per SPEC V1 §19.8.3")
