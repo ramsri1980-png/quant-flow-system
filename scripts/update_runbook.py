@@ -36,17 +36,23 @@ def tree_state():
     return sh("git", "status", "--short") or "(clean)"
 
 
+
+
 def active_changes():
+    """Return active change names as strings, tolerant of both JSON shapes."""
     try:
         out = subprocess.check_output(  # noqa: S603
             ["openspec", "list", "--json"], text=True, cwd=REPO
         )
         data = json.loads(out)
-        if isinstance(data, list):
-            return [c.get("name", str(c)) if isinstance(c, dict) else str(c) for c in data]
-        return data.get("changes", []) or []
+        items = data if isinstance(data, list) else (data.get("changes") or [])
+        return [
+            c.get("name", str(c)) if isinstance(c, dict) else str(c)
+            for c in items
+        ]
     except Exception:
         return []
+
 
 
 def completed_features():

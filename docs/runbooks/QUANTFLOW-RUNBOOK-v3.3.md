@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-16T17:18:27Z)
+## CURRENT STATE (auto 2026-10-16T21:02:54Z)
 
 | Item | Status |
 |---|---|
@@ -19,12 +19,13 @@
 | Session 3 (OpenCode + OpenSpec zero-token setup) | COMPLETE |
 | Feature 005 | COMPLETE — tag `feature-005-complete` |
 | Feature 005a | COMPLETE — tag `feature-005a-complete` |
+| Feature 005b | COMPLETE — tag `feature-005b-complete` |
 | Repo | branch `master` |
-| Working tree | clean |
-| Tags | `feature-005-complete`, `feature-005a-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `dd5e006 Update repo index` |
+| Working tree | M openspec/specs/epoch-clock/spec.md |
+| Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
+| Last commit | `d37d37f Update repo index` |
 
-**Next action:** Feature 010 — migration runner
+**Next action:** Continue active change: 005b-domain-fail-closed
 
 <!-- AUTO:CURRENT-STATE:END -->
 
@@ -75,7 +76,7 @@
 
 | Phase | Sessions | Status |
 |---|---|---|
-| E0 Setup & Foundation | 1–7 | Feature 005 done · Feature 005a done |
+| E0 Setup & Foundation | 1–7 | Feature 005 done · Feature 005a done · Feature 005b done |
 | E1 Storage & Durability | 8–13 | ⬜ Not started |
 | E2 Canonical Event Pipeline | 14–17 | ⬜ Not started |
 | E3 Pure Quant Kernels | 18–25 | ⬜ Not started |
@@ -1577,4 +1578,30 @@ b72e1bb chore(runbook): auto-refresh top state tables from git + openspec
 Working tree:
 ```
 (clean)
+```
+
+### Runbook auto-update - 2026-10-16T21:02:54Z
+
+Branch: `master`
+
+Recent commits:
+```
+d37d37f Update repo index
+bcc3061 merge: feature 005b complete
+0792a0e feat(005b): domain fail-closed hardening — Q6, Q8, Q12, Q13
+246a329 fix(005b): close aliased-import evasion in constants AST guard
+64b82f9 docs(005b): manual propose artifacts — proposal, design, tasks, deltas
+7ae1373 docs(005b): tighten propose-phase scope + clean stray change dirs
+e784408 Update repo index
+15a6c14 docs(005b): add fail-closed prompt + record Q9 resolution
+cc60bac docs(runbook): document qfmerge alias (pull + push + runbook refresh)
+1e513bb docs(runbook): document qfmerge alias (pull + push + runbook refresh)
+```
+
+Working tree:
+```
+M openspec/specs/epoch-clock/spec.md
+ M scripts/update_runbook.py
+?? openspec/changes/archive/2026-10-16-005b-domain-fail-closed/
+?? openspec/specs/domain-constants/
 ```
