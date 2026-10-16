@@ -13,6 +13,8 @@ import pytest
 from quantflow.domain.errors import FieldNameError, UnitValueError
 from quantflow.domain.time import (
     DURATION_MS_MAX,
+    EPOCH_MS_MAX,
+    EPOCH_MS_MIN,
     duration_ms,
     epoch_ms,
     field_name_kind,
@@ -25,8 +27,8 @@ INT64_MIN = -(2**63)
 # 2.1 Golden: EpochMs constructs from int, round-trips exactly
 def test_construct_epoch_ms_from_int():
     assert epoch_ms(1729012345678) == 1729012345678
-    assert epoch_ms(INT64_MAX) == INT64_MAX
-    assert epoch_ms(INT64_MIN) == INT64_MIN
+    assert epoch_ms(EPOCH_MS_MIN) == EPOCH_MS_MIN
+    assert epoch_ms(EPOCH_MS_MAX) == EPOCH_MS_MAX
 
 
 @pytest.mark.parametrize("bad", [1.5, "100", None], ids=["float", "str", "none"])
@@ -40,6 +42,35 @@ def test_epoch_ms_rejects_out_of_int64():
         epoch_ms(INT64_MAX + 1)
     with pytest.raises(UnitValueError):
         epoch_ms(INT64_MIN - 1)
+
+
+# 005b Q8: plausible operational range [EPOCH_MS_MIN, EPOCH_MS_MAX]
+# (2010-01-01T00:00:00Z..2060-01-01T00:00:00Z), inclusive, enforced at
+# construction; catches seconds/micros silently passed as ms.
+def test_epoch_ms_bounds_match_the_spec_dates():
+    assert EPOCH_MS_MIN == 1262304000000  # 2010-01-01T00:00:00Z
+    assert EPOCH_MS_MAX == 2840140800000  # 2060-01-01T00:00:00Z
+
+
+def test_seconds_passed_as_ms_are_rejected():
+    # Plausible seconds-since-epoch (2023-11-14) is below the ms floor.
+    with pytest.raises(UnitValueError, match="EPOCH_MS_MIN"):
+        epoch_ms(1_700_000_000)
+
+
+def test_micros_passed_as_ms_are_rejected():
+    # Plausible micros-since-epoch exceeds the ms ceiling.
+    with pytest.raises(UnitValueError, match="EPOCH_MS_MAX"):
+        epoch_ms(1_700_000_000_000_000)
+
+
+def test_epoch_ms_range_edges_are_inclusive():
+    assert epoch_ms(EPOCH_MS_MIN) == EPOCH_MS_MIN
+    assert epoch_ms(EPOCH_MS_MAX) == EPOCH_MS_MAX
+    with pytest.raises(UnitValueError, match="EPOCH_MS_MIN"):
+        epoch_ms(EPOCH_MS_MIN - 1)
+    with pytest.raises(UnitValueError, match="EPOCH_MS_MAX"):
+        epoch_ms(EPOCH_MS_MAX + 1)
 
 
 def test_duration_ms_max_is_the_column_safe_bound():
@@ -128,6 +159,18 @@ def test_duration_names(name):
 )
 def test_epoch_names(name):
     assert field_name_kind(name) == "epoch"
+
+
+# 005b Q13 (design D3): a name matching BOTH an epoch and a duration
+# pattern is ambiguous and raises -- silent precedence is not permitted
+# (it is what let epoch_latency_ms through in 005a).
+@pytest.mark.parametrize(
+    "name",
+    ["epoch_latency_ms", "fetch_epoch_staleness_ms", "poll_epoch_age_ms", "epoch_duration_ms"],
+)
+def test_names_matching_both_patterns_are_rejected(name):
+    with pytest.raises(FieldNameError, match="epoch and duration"):
+        field_name_kind(name)
 
 
 # 2.5 Golden: no timezone state; ET rendering stays outside domain//kernels

@@ -29,6 +29,8 @@ STRUCTURAL_ALLOWLIST = {
     "INT64_MAX": "signed 64-bit storage bound (SPEC V2 Sec 19.4.4)",
     "MICROS_PER_MILL": "unit-scale divisor (ARCH V4 Sec D.3 unit contract)",
     "DURATION_MS_MAX": "validated duration maximum (RQ-007 operator ruling)",
+    "EPOCH_MS_MIN": "epoch-ms plausible-range floor (SPEC V1 Sec 19.8.3, 005b Q8)",
+    "EPOCH_MS_MAX": "epoch-ms plausible-range ceiling (SPEC V1 Sec 19.8.3, 005b Q8)",
     "EPOCH_NAME_SUFFIXES": "SPEC V1 Sec 19.8.3 Rule 1 naming table",
     "DURATION_NAME_SUFFIXES": "SPEC V1 Sec 19.8.3 Rule 2 naming table",
     "HOST": "POC adapter endpoint config (env-derived; not decision path)",

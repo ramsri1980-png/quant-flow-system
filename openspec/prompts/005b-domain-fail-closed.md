@@ -2,10 +2,17 @@
 
 Epic: E0 setup | Depends: 005a (archived, merged) | Blockers: none
 Use: /qf-propose @openspec/prompts/005b-domain-fail-closed.md
+Expected change directory: openspec/changes/005b-domain-fail-closed/
 Capabilities (modified): money-units, epoch-clock, domain-enums
 Sources: 005a review open questions Q6, Q8, Q12, Q13 (openspec/conflicts-and-gaps.md)
 
 ## Process
+## Process
+- This is a PROPOSE-phase prompt. Produce ONLY proposal.md, design.md,
+  tasks.md, and spec deltas under openspec/changes/005b-domain-fail-closed/.
+  Do NOT modify source files. Code changes happen later via /qf-apply.
+- Do NOT edit the archived 005 or 005a changes.
+...
 - Do NOT edit the archived 005 or 005a changes.
 - Spec edits are deltas under this change, not edits to openspec/specs/**.
 - Classify each item RESOLVED_FROM_SOURCE / PROPOSED / BLOCKED.

@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from quantflow.adapters.clock import SystemClock
-from quantflow.domain.time import EpochMs, epoch_ms
+from quantflow.domain.time import EPOCH_MS_MIN, EpochMs, epoch_ms
 from quantflow.ports.clock import Clock
 
 
@@ -30,8 +30,8 @@ def test_fake_clock_satisfies_the_clock_protocol():
 
 
 def test_injected_clock_is_deterministic_with_no_ambient_fallback():
-    clock: Clock = FakeClock(epoch_ms(42))
-    assert clock.now_ms() == epoch_ms(42)
+    clock: Clock = FakeClock(epoch_ms(EPOCH_MS_MIN))
+    assert clock.now_ms() == epoch_ms(EPOCH_MS_MIN)
     assert clock.now_ms() == clock.now_ms()
 
 
