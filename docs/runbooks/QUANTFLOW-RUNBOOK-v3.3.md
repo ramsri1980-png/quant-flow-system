@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-16T21:12:24Z)
+## CURRENT STATE (auto 2026-10-16T22:49:27Z)
 
 | Item | Status |
 |---|---|
@@ -20,10 +20,11 @@
 | Feature 005 | COMPLETE — tag `feature-005-complete` |
 | Feature 005a | COMPLETE — tag `feature-005a-complete` |
 | Feature 005b | COMPLETE — tag `feature-005b-complete` |
+| Feature 005c | COMPLETE — tag `feature-005c-complete` |
 | Repo | branch `master` |
 | Working tree | clean |
-| Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `96a1c44 Update repo index` |
+| Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `feature-005c-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
+| Last commit | `eafaf0d Update repo index` |
 
 **Next action:** Continue active change: 005b-domain-fail-closed
 
@@ -76,7 +77,7 @@
 
 | Phase | Sessions | Status |
 |---|---|---|
-| E0 Setup & Foundation | 1–7 | Feature 005 done · Feature 005a done · Feature 005b done |
+| E0 Setup & Foundation | 1–7 | Feature 005 done · Feature 005a done · Feature 005b done · Feature 005c done |
 | E1 Storage & Durability | 8–13 | ⬜ Not started |
 | E2 Canonical Event Pipeline | 14–17 | ⬜ Not started |
 | E3 Pure Quant Kernels | 18–25 | ⬜ Not started |
@@ -1645,6 +1646,29 @@ d37d37f Update repo index
 bcc3061 merge: feature 005b complete
 0792a0e feat(005b): domain fail-closed hardening — Q6, Q8, Q12, Q13
 246a329 fix(005b): close aliased-import evasion in constants AST guard
+```
+
+Working tree:
+```
+(clean)
+```
+
+### Runbook auto-update - 2026-10-16T22:49:27Z
+
+Branch: `master`
+
+Recent commits:
+```
+eafaf0d Update repo index
+055903d merge: feature 005c complete
+9793760 feat(005c): domain cleanup — Q3/Q4/Q5/Q7, cooldown_until, random regression, test gaps
+ebdb121 Revert "docs: restructure conflicts-and-gaps — move Q2/Q11/Q14/Q15/Q16 to Resolved, add Q8/Q13"
+0bb8c1e docs: restructure conflicts-and-gaps — move Q2/Q11/Q14/Q15/Q16 to Resolved, add Q8/Q13
+d1cd170 docs: runbook auto-update after 005d decisions
+96a1c44 Update repo index
+fc7a6a8 docs(005d): record decisions for Q2, Q11, Q14, Q15, Q16 and freeze pocs/interface
+46f995c docs: runbook auto-update after feature 005b merge
+1a7b0a4 Update repo index
 ```
 
 Working tree:
