@@ -101,7 +101,7 @@
     },
     "qf-build": {
       "description": "Implementer. Writes code and tests; runs ruff, mypy, pytest.",
-      "steps": 30,
+      "steps": 50,
       "permissions": [
         {
           "action": "subagent",
