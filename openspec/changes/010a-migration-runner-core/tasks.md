@@ -27,10 +27,10 @@
 ## 4. Atomic runner
 
 - [x] 4.1 Red tests (migration fresh+upgrade + replay + no-future-leakage + temp-paths-only classes): fault-injected mid-migration failure leaves no partial DDL and exactly one `FAILED` row; `FAILED` blocks apply; explicit BEGIN/COMMIT (no `executescript`); semicolon-in-trigger handling; per-store dual-run partial failure; idempotent re-apply of a closed manifest; restart mid-suite; all DBs under `tmp_path`; verify these fail first.
-- [ ] 4.2 Implement the SQLite runner with `isolation_level=None`, explicit transactions, and a reviewed statement-splitting strategy (no naive `;`); verify rollback and trigger tests pass.
-- [ ] 4.3 Implement the DuckDB runner with explicit per-migration transactions; verify DuckDB rollback/rollback-fault tests pass.
-- [ ] 4.4 Implement failure handling: rollback DDL + OK insert, then upsert one `FAILED` row in a new transaction, then abort; verify exactly-one-FAILED and default-abort tests pass.
-- [ ] 4.5 Implement connection policy (embedded reuse vs standalone PRAGMAs `WAL`/`NORMAL`/`foreign_keys=ON`/`busy_timeout=5000` verified before `BEGIN`, no competing writer; DuckDB `temp_directory` set first without a `/data` test path); verify PRAGMA-mode tests pass and refuse-on-incompatible-state is covered.
+- [x] 4.2 Implement the SQLite runner with `isolation_level=None`, explicit transactions, and a reviewed statement-splitting strategy (no naive `;`); verify rollback and trigger tests pass.
+- [x] 4.3 Implement the DuckDB runner with explicit per-migration transactions; verify DuckDB rollback/rollback-fault tests pass.
+- [x] 4.4 Implement failure handling: rollback DDL + OK insert, then upsert one `FAILED` row in a new transaction, then abort; verify exactly-one-FAILED and default-abort tests pass.
+- [x] 4.5 Implement connection policy (embedded reuse vs standalone PRAGMAs `WAL`/`NORMAL`/`foreign_keys=ON`/`busy_timeout=5000` verified before `BEGIN`, no competing writer; DuckDB `temp_directory` set first without a `/data` test path); verify PRAGMA-mode tests pass and refuse-on-incompatible-state is covered.
 - [ ] 4.6 Add an AST/scan guard test rejecting `executescript` and any runtime DDL outside the runner; verify the guard fails on a planted violation.
 
 ## 5. CLI apply/status/verify
