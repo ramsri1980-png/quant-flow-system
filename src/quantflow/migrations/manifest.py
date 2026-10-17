@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path, PurePosixPath
 
-from quantflow.domain.errors import MigrationManifestError
+from quantflow.domain.errors import MigrationManifestError, MigrationValidationError
 
 MANIFEST_FILENAME = "MANIFEST.json"
 BASELINE_ID = "000_baseline"
@@ -235,6 +235,43 @@ def parse_manifest(raw: object) -> Manifest:
     return Manifest(entries=tuple(entries), baseline_covered=_parse_baseline_covered(raw))
 
 
+def validate_slots(manifest: Manifest) -> None:
+    """Reject entries that occupy a reserved (NEVER) slot for their store."""
+    for entry in manifest.entries:
+        if entry.slot in NEVER_SLOTS[entry.store]:
+            raise MigrationValidationError(
+                f"migration id {entry.id!r} uses a reserved {entry.store.value} slot "
+                f"({entry.slot:03d})"
+            )
+
+
+def adopt_only_entries(manifest: Manifest, store: Store) -> tuple[ManifestEntry, ...]:
+    """ADOPT-ONLY entries for ``store`` (reported; never auto-applied in 010a)."""
+    return tuple(
+        entry
+        for entry in manifest.entries
+        if entry.store is store and entry.slot in ADOPT_ONLY_SLOTS[store]
+    )
+
+
+def validate_file_inventory(manifest: Manifest, migrations_root: Path) -> None:
+    """Fail closed on unmanifested ``.sql`` files or manifest entries with no file."""
+    for store in Store:
+        store_dir = migrations_root / store.value
+        on_disk: set[str] = set()
+        if store_dir.is_dir():
+            on_disk = {
+                path.relative_to(migrations_root).as_posix() for path in store_dir.rglob("*.sql")
+            }
+        for extra in sorted(on_disk - {e.path for e in manifest.entries}):
+            raise MigrationValidationError(f"unmanifested migration file: {extra}")
+        for entry in manifest.entries:
+            if entry.store is store and entry.path not in on_disk:
+                raise MigrationValidationError(
+                    f"manifest entry {entry.id!r} has no file at {entry.path}"
+                )
+
+
 def load_manifest(migrations_root: Path) -> Manifest:
     """Read and validate `<migrations_root>/MANIFEST.json`."""
     path = migrations_root / MANIFEST_FILENAME
@@ -248,4 +285,7 @@ def load_manifest(migrations_root: Path) -> Manifest:
         ) from exc
     except OSError as exc:
         raise MigrationManifestError(f"cannot read migration manifest: {path}: {exc}") from exc
-    return parse_manifest(raw)
+    manifest = parse_manifest(raw)
+    validate_slots(manifest)
+    validate_file_inventory(manifest, migrations_root)
+    return manifest
