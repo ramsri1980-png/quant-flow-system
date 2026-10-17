@@ -288,3 +288,18 @@ Matches: C13 in `openspec/conflicts-and-gaps.md`.
 - OQ-6 Python version drift: pyproject is ground truth, no action.
 
 Apply is unblocked.
+
+### D2 Amendment (2026-10-17)
+
+Implementation diverged from D2 as written. `src/quantflow/cli/__init__.py`
+was empty (no prior CLI entry point existed). Implemented as:
+
+- `src/quantflow/cli/main.py` — Typer app, `migrate` sub-group added via
+  `add_typer(migrate_app, name="migrate")`, `main()` entry.
+- `pyproject.toml` — new `[project.scripts]` block:
+  `quantflow = "quantflow.cli.main:main"`.
+
+This is functionally equivalent to D2's "Typer sub-app mounted from
+`cli/__init__.py`" but cleaner: no package-import side effects. D2's
+`migrate.py` filename is superseded by `main.py` (single-file CLI for now;
+future sub-apps split into sibling modules if the file exceeds ~200 lines).
