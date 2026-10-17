@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-17T14:16:39Z)
+## CURRENT STATE (auto 2026-10-17T20:12:25Z)
 
 | Item | Status |
 |---|---|
@@ -21,10 +21,11 @@
 | Feature 005a | COMPLETE — tag `feature-005a-complete` |
 | Feature 005b | COMPLETE — tag `feature-005b-complete` |
 | Feature 005c | COMPLETE — tag `feature-005c-complete` |
-| Repo | branch `feature/010a-migration-runner-core` |
-| Working tree | M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md |
-| Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `feature-005c-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `e10dd30 fix(openspec): remove stale 005b-domain-fail-closed source after archive` |
+| Feature 010a | COMPLETE — tag `feature-010a-complete` |
+| Repo | branch `master` |
+| Working tree | clean |
+| Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `feature-005c-complete`, `feature-010a-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
+| Last commit | `d0c3867 Update repo index` |
 
 **Next action:** Continue active change: 010a-migration-runner-core
 
@@ -78,7 +79,7 @@
 | Phase | Sessions | Status |
 |---|---|---|
 | E0 Setup & Foundation | 1–7 | Feature 005 done · Feature 005a done · Feature 005b done · Feature 005c done |
-| E1 Storage & Durability | 8–13 | ⬜ Not started |
+| E1 Storage & Durability | 8–13 | Feature 010a done |
 | E2 Canonical Event Pipeline | 14–17 | ⬜ Not started |
 | E3 Pure Quant Kernels | 18–25 | ⬜ Not started |
 | E4 Decision Evidence & Delivery | 26–29 | ⬜ Not started |
@@ -1796,4 +1797,27 @@ M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
  M openspec/formulas-dealer-greeks.md
  M src/quantflow/migrations/manifest.py
 ?? openspec/c13-dealer-positioning-implementation-plan.md
+```
+
+### Runbook auto-update - 2026-10-17T20:12:25Z
+
+Branch: `master`
+
+Recent commits:
+```
+d0c3867 Update repo index
+5fbf349 merge: feature 010a complete — migration runner core (32/32 tasks, 496 tests, migrations 99-100% coverage)
+760dd9b 010a-7.4: repo cleanliness verified — no forbidden-path diffs, status clean, conflicts-and-gaps current
+d180d16 010a-7.3: anti-detection SHA gate verified — ARCH Vol3 matches pinned digest
+fc9d308 010a-7.2: coverage gate — migrations 99-100%, domain 100%; 35 fail-closed branch tests; check_constants green
+9cb02d5 010a-7.1: full suite green — pytest 461 passed, ruff check+format clean, mypy --strict clean
+ee47170 chore(harness): lean tool usage fallback for sessions without harness-tools
+b244933 fix(010a): mypy strict + ruff clean on CLI — domain.errors, conn: Any, sys.exit(.exit_code), S608 noqa
+15adca4 010a-6.2: wire tests/migration integration suite — integration marker, <10s budget, /data path guards
+4fa9166 010a-6.1: fresh-vs-upgrade schema equivalence (canonical sqlite_master / DuckDB introspection)
+```
+
+Working tree:
+```
+(clean)
 ```
