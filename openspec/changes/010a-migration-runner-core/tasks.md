@@ -36,10 +36,10 @@
 ## 5. CLI apply/status/verify
 
 - [ ] 5.1 Red tests (golden + duplicate/idempotency/restart classes): `migrate apply|status|verify [--store sqlite|duckdb|both]`, read-only `verify`/`status` (no ledger write, no mutating PRAGMA, no DB creation), explicit missing-store reporting, `PENDING` not treated as corruption, DB-newer drift, and exit codes 0/1/2; verify they fail first.
-- [ ] 5.2 Implement the `migrate` CLI (`apply`, `status`, `verify`, store selection) wiring the runner and clock adapter; verify apply/status golden tests pass.
-- [ ] 5.3 Implement the `verify` check set and exit-code mapping (manifest/deps/acyclicity/unmanifested/slot/SHA-256/ledger agreement/baseline identity/closure/no-FAILED/no-DB-newer); verify exit-code tests pass and `verify` mutates nothing.
-- [ ] 5.4 If OQ-1 selects `--retry-failed`, implement it with the agreed audit semantics; otherwise document why retry is deferred; verify the chosen behavior with a test.
-- [ ] 5.5 Implement `status` reporting pending count and each store's last successful migration; verify the status test passes.
+- [x] 5.2 Implement the `migrate` CLI (`apply`, `status`, `verify`, store selection) wiring the runner and clock adapter; verify apply/status golden tests pass.
+- [x] 5.3 Implement the `verify` check set and exit-code mapping (manifest/deps/acyclicity/unmanifested/slot/SHA-256/ledger agreement/baseline identity/closure/no-FAILED/no-DB-newer); verify exit-code tests pass and `verify` mutates nothing.
+- [x] 5.4 If OQ-1 selects `--retry-failed`, implement it with the agreed audit semantics; otherwise document why retry is deferred; verify the chosen behavior with a test.
+- [x] 5.5 Implement `status` reporting pending count and each store's last successful migration; verify the status test passes.
 
 ## 6. Equivalence & integration timing
 
