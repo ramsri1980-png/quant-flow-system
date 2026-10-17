@@ -10,7 +10,7 @@
 ## 2. Manifest validator
 
 - [x] 2.1 Red tests (property + missing/stale/malformed + duplicate classes): required fields, scalar `applies_after` rejected, cross-store dependency rejected, path traversal rejected, duplicate IDs, unmanifested `.sql` files, slot policy (NEVER 072–079 / 046–049; ADOPT-ONLY 043–045/050/071), unused classification, cycle detection, and stable numeric-tie-break order with `000_baseline` first; verify the tests fail against the empty module.
-- [ ] 2.2 Implement manifest loading and schema validation (`{id, store, path, sha256, applies_after, component, enabled}`) including path safety and `NNN_<slug>.sql` form; verify 2.1 schema/path/duplicate tests pass.
+- [x] 2.2 Implement manifest loading and schema validation (`{id, store, path, sha256, applies_after, component, enabled}`) including path safety and `NNN_<slug>.sql` form; verify 2.1 schema/path/duplicate tests pass.
 - [ ] 2.3 Implement slot-policy and unmanifested-file validation; verify the NEVER/ADOPT-ONLY/unmanifested tests pass.
 - [ ] 2.4 Implement store-local dependency existence, cycle detection, and stable topological order (no `MAX(migration_id)`); verify closure/cycle/ordering tests pass and ordering is identical across runs.
 - [ ] 2.5 Implement per-store `baseline_covered` metadata parsing/validation (informational only); verify a malformed coverage section fails closed.
