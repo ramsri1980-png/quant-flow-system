@@ -23,7 +23,7 @@ Raw gamma/OI without S² makes low-price OTM strikes dominate: forbidden. In cod
 ## F3 Dealer sign (the central assumption — explicit, switchable)
 Dealer exposure_i = s_i · exposure_i, where s_i = dealer position sign.
 - Model A OI_NAIVE [P default]: dealer long calls (+1), short puts (−1). B SIGNED_FLOW: s_i = −(aggressor-signed customer flow) for the cluster's contracts, OI_NAIVE elsewhere. C PROVIDER: use provider's signed map as-is (labelled provider-estimated).
-- Compute regime under two INDEPENDENT models (A vs B, or A vs C). sign_fragile = sign of NetGamma$ at spot differs between them → regime = UNINFORMATIVE. Separately, a TEST (not a runtime flag): negating s_i must not leave any decision unchanged-by-accident, i.e. report which decisions flip under negation (measures how much rests on the assumption).
+- Compute regime under two explicitly identified model assumptions (A vs B, or A vs C). Do not call these independent evidence when they share alerts, OI inputs, provider estimates, or other assumptions. Record shared inputs and dependencies. sign_fragile = sign of NetGamma$ at spot differs between them → regime = UNINFORMATIVE. Separately, a TEST (not a runtime flag): negating s_i must not leave any decision unchanged-by-accident, i.e. report which decisions flip under negation (measures how much rests on the assumption).
 - 0DTE: prior-day OI misses same-day positions → label map "provider-estimated/OI-stale"; never HIGH-grade on OI_NAIVE alone.
 
 ## F4 Regime, flip, confidence (detection)

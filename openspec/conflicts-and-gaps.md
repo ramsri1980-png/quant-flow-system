@@ -214,3 +214,47 @@ resolved appear under "## Resolved (2026-10-16)" further down.
 | 010a-Q3 | DuckDB 050 PROPOSED CORE REPAIR vs ADOPT-ONLY in D5 | 010a classifies as ADOPT-ONLY per D5 |
 | 010a-Q4 | Ledger PK cannot hold per-attempt history | Retry audit in operator_control_audit per D12 |
 | 010a-Q5 | Python 3.14 vs 3.12; symlink | Non-issue; pyproject is ground truth |
+
+## C13 — Dealer Positioning Derivation
+
+**Status: PROPOSED — operator approval pending.**
+**Scope: design clarification; no production model change.**
+
+1. **C13-01 — Baseline:** Preserve F3 `OI_NAIVE` as a labelled
+   dealer-position assumption, not observed inventory.
+2. **C13-02 — Alternatives:** Permit explicit per-underlying
+   alternative sign assumptions in shadow research only.
+   No automatic prior selection or production promotion.
+3. **C13-03 — Independence:** Do not describe two models as
+   independent evidence when they share alerts, OI, providers,
+   or other material inputs. Record shared dependencies.
+4. **C13-04 — Provenance:** Distinguish observed alert data,
+   inferred aggressor side, unknown customer identity,
+   alert-only volume, prior-day OI, and retrospective T+1
+   opening/closing evidence. Unknown remains unknown.
+5. **C13-05 — Estimator:** Reject the proposed flow/OI blend,
+   unvalidated constants, automatic learning, 0DTE override,
+   and uncalibrated confidence. Do not infer full dealer
+   inventory from pre-filtered alerts.
+6. **C13-06 — Evaluation:** Reuse
+   `openspec/evaluation-protocol.md`, brief 041b, and
+   SPEC Vol 6 §F.3 sample-size rules. Require per-underlying
+   holdouts, leakage checks, provenance, and sensitivity
+   testing. Negation is a sensitivity test, not a new
+   production model.
+7. **C13-07 — Enforcement:** Shadow-first. Propose Q6-style
+   AST enforcement preventing unapproved estimators from
+   entering production decision paths. Do not claim the
+   guard exists before it is implemented and tested.
+
+**Implementation constraints:** No migration 053, no frozen
+reference edits, no `tools/apply_doc_patches.py`, no invented
+runtime implementation, and no automatic production promotion.
+Classify fields using SPEC/ARCH contracts. Propose storage only
+if demonstrated necessary; do not assume research tables exist.
+
+**Closure:** Operator approves the design decisions separately.
+Model effectiveness and production promotion require empirical
+validation under the existing evaluation protocol.
+
+Implementation plan: `openspec/c13-dealer-positioning-implementation-plan.md`
