@@ -19,3 +19,19 @@ class FieldNameError(QuantFlowError, ValueError):
 
 class VocabularyError(QuantFlowError, ValueError):
     """A literal was rejected by a closed domain vocabulary."""
+
+
+class MigrationError(QuantFlowError):
+    """Base class for migration-subsystem failures."""
+
+
+class MigrationManifestError(MigrationError):
+    """The migration manifest is missing, malformed, or schema-invalid."""
+
+
+class MigrationLedgerError(MigrationError):
+    """The migration ledger could not be bootstrapped or read consistently."""
+
+
+class MigrationValidationError(MigrationError):
+    """A migration failed dependency, closure, checksum, or ordering validation."""

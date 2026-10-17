@@ -2,10 +2,10 @@
 
 ## 1. Preconditions & scaffolding
 
-- [ ] 1.1 Resolve **OQ-1 (BLOCKING) retry/audit** with the operator and record the decision in `design.md` Open Questions plus `openspec/conflicts-and-gaps.md`; verify the decision states whether `--retry-failed` is in scope and where the audited trail lives (ledger single row vs external audit).
-- [ ] 1.2 Resolve **OQ-2 (BLOCKING) manifest format** (`MANIFEST.json` per brief vs `MANIFEST.md` per ARCH V2 §C.3) with the operator; log the resolution in `openspec/conflicts-and-gaps.md`; verify on-disk that the chosen filename is unambiguous.
-- [ ] 1.3 Create `src/quantflow/migrations/` package with empty `manifest.py` and `runner.py`, and a `migrate` Typer subcommand under `src/quantflow/cli`; verify `uv run python -c "import quantflow.migrations"` succeeds and `uv run quantflow migrate --help` prints usage.
-- [ ] 1.4 Define the new error types in `quantflow.domain.errors` (manifest/ledger/validation failures); verify each new type is importable and caught by `QuantFlowError`.
+- [x] 1.1 Resolve **OQ-1 (BLOCKING) retry/audit** with the operator and record the decision in `design.md` Open Questions plus `openspec/conflicts-and-gaps.md`; verify the decision states whether `--retry-failed` is in scope and where the audited trail lives (ledger single row vs external audit).
+- [x] 1.2 Resolve **OQ-2 (BLOCKING) manifest format** (`MANIFEST.json` per brief vs `MANIFEST.md` per ARCH V2 §C.3) with the operator; log the resolution in `openspec/conflicts-and-gaps.md`; verify on-disk that the chosen filename is unambiguous.
+- [x] 1.3 Create `src/quantflow/migrations/` package with empty `manifest.py` and `runner.py`, and a `migrate` Typer subcommand under `src/quantflow/cli`; verify `uv run python -c "import quantflow.migrations"` succeeds and `uv run quantflow migrate --help` prints usage.
+- [x] 1.4 Define the new error types in `quantflow.domain.errors` (manifest/ledger/validation failures); verify each new type is importable and caught by `QuantFlowError`.
 
 ## 2. Manifest validator
 
