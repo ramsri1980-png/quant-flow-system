@@ -52,3 +52,4 @@ skills-lock.json
 
 *.bak-*
 *.bak.*
+.quant-logs/
