@@ -26,7 +26,7 @@
 
 ## 4. Atomic runner
 
-- [ ] 4.1 Red tests (migration fresh+upgrade + replay + no-future-leakage + temp-paths-only classes): fault-injected mid-migration failure leaves no partial DDL and exactly one `FAILED` row; `FAILED` blocks apply; explicit BEGIN/COMMIT (no `executescript`); semicolon-in-trigger handling; per-store dual-run partial failure; idempotent re-apply of a closed manifest; restart mid-suite; all DBs under `tmp_path`; verify these fail first.
+- [x] 4.1 Red tests (migration fresh+upgrade + replay + no-future-leakage + temp-paths-only classes): fault-injected mid-migration failure leaves no partial DDL and exactly one `FAILED` row; `FAILED` blocks apply; explicit BEGIN/COMMIT (no `executescript`); semicolon-in-trigger handling; per-store dual-run partial failure; idempotent re-apply of a closed manifest; restart mid-suite; all DBs under `tmp_path`; verify these fail first.
 - [ ] 4.2 Implement the SQLite runner with `isolation_level=None`, explicit transactions, and a reviewed statement-splitting strategy (no naive `;`); verify rollback and trigger tests pass.
 - [ ] 4.3 Implement the DuckDB runner with explicit per-migration transactions; verify DuckDB rollback/rollback-fault tests pass.
 - [ ] 4.4 Implement failure handling: rollback DDL + OK insert, then upsert one `FAILED` row in a new transaction, then abort; verify exactly-one-FAILED and default-abort tests pass.
