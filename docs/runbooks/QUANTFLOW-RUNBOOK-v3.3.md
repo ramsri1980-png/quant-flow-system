@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-16T22:49:27Z)
+## CURRENT STATE (auto 2026-10-17T04:30:12Z)
 
 | Item | Status |
 |---|---|
@@ -24,7 +24,7 @@
 | Repo | branch `master` |
 | Working tree | clean |
 | Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `feature-005c-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `eafaf0d Update repo index` |
+| Last commit | `fff528c Update repo index` |
 
 **Next action:** Continue active change: 005b-domain-fail-closed
 
@@ -1669,6 +1669,29 @@ d1cd170 docs: runbook auto-update after 005d decisions
 fc7a6a8 docs(005d): record decisions for Q2, Q11, Q14, Q15, Q16 and freeze pocs/interface
 46f995c docs: runbook auto-update after feature 005b merge
 1a7b0a4 Update repo index
+```
+
+Working tree:
+```
+(clean)
+```
+
+### Runbook auto-update - 2026-10-17T04:30:12Z
+
+Branch: `master`
+
+Recent commits:
+```
+fff528c Update repo index
+20a387b chore(openspec): implement feature-group layout and flat change naming rule (constitution §12)
+ccae010 docs: runbook auto-update after feature 005c merge
+eafaf0d Update repo index
+055903d merge: feature 005c complete
+9793760 feat(005c): domain cleanup — Q3/Q4/Q5/Q7, cooldown_until, random regression, test gaps
+ebdb121 Revert "docs: restructure conflicts-and-gaps — move Q2/Q11/Q14/Q15/Q16 to Resolved, add Q8/Q13"
+0bb8c1e docs: restructure conflicts-and-gaps — move Q2/Q11/Q14/Q15/Q16 to Resolved, add Q8/Q13
+d1cd170 docs: runbook auto-update after 005d decisions
+96a1c44 Update repo index
 ```
 
 Working tree:
