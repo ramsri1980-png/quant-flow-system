@@ -258,3 +258,33 @@ Model effectiveness and production promotion require empirical
 validation under the existing evaluation protocol.
 
 Implementation plan: `openspec/c13-dealer-positioning-implementation-plan.md`
+
+## 010a Review Findings (2026-10-17)
+
+### Fixed in fix(010a-review) commit
+
+| ID | Finding | Severity | Resolution |
+|---|---|---|---|
+| 010a-R1 | `status.pending_count = len(applied_ok)` reported applied as pending | MAJOR | Renamed to `applied_count`, printed correctly |
+| 010a-R2 | `verify` raised "not found in ledger" for pending entries (violates D15) | MAJOR | Pending now reported, does not fail exit code |
+| 010a-R4 | `retry_failed` audit was stdout-only; no operator_control_audit write | MAJOR | Best-effort DB write if table exists; stdout fallback otherwise |
+| 010a-R5 | `retry_failed` hardcoded `migrations/MANIFEST.json` | MINOR | Added `--manifest-path` option |
+
+### Deferred / accepted
+
+| ID | Finding | Severity | Resolution |
+|---|---|---|---|
+| 010a-R3 | SQL splitter uses `sqlite3.complete_statement` for both stores | MINOR | Works for 010a synthetic DDL. `duckdb.extract_statements` deferred to 011 if macros needed |
+| 010a-R6 | Unmanifested 051/052 files under migrations/duckdb/ | DEFERRED | 010a scope per D5: "051/052 handled by 010b" |
+
+### False positives
+
+| Finding | Why |
+|---|---|
+| Missing change dir | Archived to `openspec/changes/archive/2026-10-17-010a-migration-runner-core/` |
+| No MANIFEST.json | 010a uses synthetic fixtures only; real manifest is 010b |
+| Only 2 test files | 8 files exist across `tests/migration/` (2) + `tests/unit/migration/` (5) + `tests/unit/test_migration_scaffolding.py` |
+| `Connection = Any` | D13 doesn't mandate Protocol; mypy-strict clean |
+| verify missing DB-newer check | Present at `cli/main.py` (~line 260) |
+| `_detect_cycles ready.pop()` | Cosmetic; correct algorithm |
+| `check_baseline_closure` duplicates `_require_dependencies` | Refactor opportunity, not a bug |
