@@ -51,7 +51,7 @@
 - [x] 7.1 Run `uv run pytest -q`, `uv run ruff check src tests`, `uv run ruff format --check src tests`, and `uv run mypy --strict src/quantflow`; verify all pass.
 - [x] 7.2 Verify coverage ≥ 95% for `migrations/**` (and `domain/**` unchanged) and run `python3 scripts/check_constants.py`; verify both succeed.
 - [x] 7.3 Verify the anti-detection SHA gate: `docs/reference/CURRENT/ARCH_v5.1.5.1_Vol3_Capture_AntiDetection.md` SHA-256 equals `2d7a90e533196af61745bc4efd3259b7b64b519b8ec78662392b50a911285e23`; abort on mismatch.
-- [ ] 7.4 Verify `git status --short` is clean with no `.bak` files and that no file under `/data`, `docs/reference/CURRENT`, or archived 005/005a–d was modified; update `openspec/conflicts-and-gaps.md` for any resolved item.
+- [x] 7.4 Verify `git status --short` is clean with no `.bak` files and that no file under `/data`, `docs/reference/CURRENT`, or archived 005/005a–d was modified; update `openspec/conflicts-and-gaps.md` for any resolved item.
 
 ## Workflow follow-up
 
