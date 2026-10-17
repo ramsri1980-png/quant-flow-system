@@ -501,3 +501,54 @@ class TestRunnerPortContract:
             elif isinstance(node, ast.ImportFrom) and node.module:
                 imported.append(node.module)
         assert not [name for name in imported if name.split(".")[0] in banned]
+
+
+# --------------------------------------------------------------------------- #
+# 10. no-future-leakage: AST/scan guard (task 4.6)
+# --------------------------------------------------------------------------- #
+
+_SRC_ROOT = Path(__file__).resolve().parents[3] / "src" / "quantflow"
+_DDL_HEADS = {"CREATE", "ALTER", "DROP"}
+
+
+def _audit_sources(files: Sequence[Path]) -> list[str]:
+    """Return violations: executescript use, or literal DDL outside runner.py."""
+    violations: list[str] = []
+    for path in files:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr == "executescript":
+                violations.append(f"{path}: executescript is forbidden")
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in {"execute", "executemany"}
+                and node.args
+            ):
+                first = node.args[0]
+                if (
+                    isinstance(first, ast.Constant)
+                    and isinstance(first.value, str)
+                    and first.value.strip()
+                    and first.value.lstrip().split(None, 1)[0].upper() in _DDL_HEADS
+                    and path.name != "runner.py"
+                ):
+                    violations.append(f"{path}: runtime DDL outside the runner")
+    return violations
+
+
+class TestNoRuntimeDdlGuard:
+    def test_real_sources_have_no_violations(self) -> None:
+        files = sorted(_SRC_ROOT.rglob("*.py"))
+        assert files, "expected to scan the quantflow sources"
+        assert _audit_sources(files) == []
+
+    def test_guard_fails_on_a_planted_executescript(self, tmp_path: Path) -> None:
+        planted = tmp_path / "planted_exec.py"
+        planted.write_text("conn.executescript('CREATE TABLE x (a INT);')\n", encoding="utf-8")
+        assert _audit_sources([planted]) != []
+
+    def test_guard_fails_on_planted_ddl_outside_runner(self, tmp_path: Path) -> None:
+        planted = tmp_path / "planted_ddl.py"
+        planted.write_text("conn.execute('CREATE TABLE x (a INT)')\n", encoding="utf-8")
+        assert _audit_sources([planted]) != []
