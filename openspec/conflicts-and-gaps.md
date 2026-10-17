@@ -202,3 +202,13 @@ resolved appear under "## Resolved (2026-10-16)" further down.
   rename to `_RATIO`. Not in 005c's declared frozen scope (ARCH Vol 1 + SPEC Vol 1
   §19.8.3 only). Follow-up change needed to align SPEC Vol 3 with the renamed
   constant, or accept the drift as documentation-only. Non-blocking.
+
+## 010a Open Questions (pre-resolved 2026-10-17)
+
+| ID | Conflict | Resolution |
+|---|---|---|
+| 010a-Q1 | ARCH says MANIFEST.md; 010a prompt mandates MANIFEST.json | 010a uses MANIFEST.json; 010b reconciles via design.md D16 |
+| 010a-Q2 | ARCH uses 000_baseline_v2.0.5.1.sql; 010a uses ID 000_baseline | 000_baseline is logical ID; filename per D10 |
+| 010a-Q3 | DuckDB 050 PROPOSED CORE REPAIR vs ADOPT-ONLY in D5 | 010a classifies as ADOPT-ONLY per D5 |
+| 010a-Q4 | Ledger PK cannot hold per-attempt history | Retry audit in operator_control_audit per D12 |
+| 010a-Q5 | Python 3.14 vs 3.12; symlink | Non-issue; pyproject is ground truth |
