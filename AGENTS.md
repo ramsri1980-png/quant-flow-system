@@ -3,7 +3,7 @@
 Project: local single-operator options-flow RESEARCH system. No orders, no autonomy, no LLM in the decision path, no ML before E8.
 Truth: docs/reference/CURRENT/ (SPEC v2.0.5.1 V1–V7, ARCH v5.1.5.1 V1–V4). Cite as "SPEC V3 §8.4" / "ARCH V4 §D.5". Never write "per prior".
 Full rules: openspec/constitution.md (read it when proposing/designing). Open conflicts: openspec/conflicts-and-gaps.md.
-Flow: /opsx-explore → /opsx-propose @openspec/prompts/NNN-*.md → /opsx-apply → /opsx-verify → /opsx-archive. One session per phase.
+Flow: /opsx-explore → /opsx-propose @openspec/prompts/<NNN-group>/<FFF>-*.md (or prompts/NNN-*.md if unsplit) → /opsx-apply → /opsx-verify → /opsx-archive. Change name = NNN-FFF-slug, always flat (constitution §12). One session per phase.
 
 Non-negotiables
 1. Fail closed. Missing/stale/ambiguous evidence → explicit unavailable/WATCH, never a silent default or 0.

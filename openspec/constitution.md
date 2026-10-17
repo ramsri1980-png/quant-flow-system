@@ -46,7 +46,14 @@ Ladder: unit golden → property → contract → migration → repository → p
 ## 12. How to write specs here
 - OpenSpec requirements: "### Requirement:" with SHALL, each with "#### Scenario:" WHEN/THEN, each citing its source section.
 - Separate SPECIFIED (stated in docs) from UNSPECIFIED (heading-only, deferred, conflicting). Unspecified → Open Questions; never invent formulas, thresholds, schemas or enums.
-- One feature = one change. Slice big features by capability. Do not mix epics.
+- One feature = one change = one primary capability. Slice a brief by capability. Do not mix epics (E0–E8).
+- Layout and naming:
+  - A brief that spans several capabilities becomes a feature group: folder `openspec/prompts/NNN-<slug>/` holding `000-overview.md` (shared sources, ordering, exclusions) and feature briefs `FFF-<capability>.md`.
+  - Each feature brief becomes one OpenSpec change named `NNN-FFF-<slug>` (e.g. `005-001-domain-enums`). Changes stay flat under `openspec/changes/`; never nest folders there.
+  - A brief that is not split stays `openspec/prompts/NNN-<slug>.md`, and its change is named `NNN-<slug>`.
+  - Capabilities under `openspec/specs/` stay flat and unnumbered.
+  - Each feature brief declares: Change name, Group, Epic (E<n>), Depends, Capability, Sources.
+  - Archived changes are never renamed.
 - If a brief and a doc disagree, the doc wins; log it in conflicts-and-gaps.md.
 
 ## 13. Change control
