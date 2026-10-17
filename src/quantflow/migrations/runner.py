@@ -20,7 +20,7 @@ from typing import Any
 
 from quantflow.domain.errors import MigrationLedgerError
 from quantflow.domain.time import EpochMs, epoch_ms
-from quantflow.migrations.manifest import Store
+from quantflow.migrations.manifest import BASELINE_ID, Store
 
 #: A DBAPI-style connection: `sqlite3.Connection` or `duckdb.DuckDBPyConnection`.
 #: Both expose ``execute``/``fetchall``; the runner only uses that surface.
@@ -102,6 +102,14 @@ class LedgerResult(StrEnum):
 
     OK = "OK"
     FAILED = "FAILED"
+
+
+class StoreState(StrEnum):
+    """How a store relates to the baseline (design D6)."""
+
+    FRESH = "fresh"
+    ALREADY_BASELINED = "already_baselined"
+    LEGACY = "legacy"
 
 
 @dataclass(frozen=True, slots=True)
@@ -226,3 +234,33 @@ def failed_ids(conn: Connection, store: Store) -> frozenset[str]:
     return frozenset(
         row.migration_id for row in ledger_rows(conn, store) if row.result is LedgerResult.FAILED
     )
+
+
+def application_tables(conn: Connection, store: Store) -> frozenset[str]:
+    """Application tables present, excluding the ledger itself.
+
+    The ledger is infrastructure, not application schema, so it never counts
+    toward the emptiness check that gates baselining.
+    """
+    return _all_table_names(conn, store) - {ledger_table(store)}
+
+
+def has_ok_baseline(conn: Connection, store: Store) -> bool:
+    """True when an OK ``000_baseline`` ledger row exists for ``store``."""
+    if not ledger_exists(conn, store):
+        return False
+    return BASELINE_ID in applied_ok_ids(conn, store)
+
+
+def classify_store(conn: Connection, store: Store) -> StoreState:
+    """Classify ``store`` as fresh, already-baselined, or legacy.
+
+    An OK baseline row wins; otherwise application schema without a baseline is
+    legacy (abort pending an explicit adoption plan); otherwise the store is
+    fresh and baseline-eligible.
+    """
+    if has_ok_baseline(conn, store):
+        return StoreState.ALREADY_BASELINED
+    if application_tables(conn, store):
+        return StoreState.LEGACY
+    return StoreState.FRESH
