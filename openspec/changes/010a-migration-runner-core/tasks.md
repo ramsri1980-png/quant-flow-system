@@ -31,7 +31,7 @@
 - [x] 4.3 Implement the DuckDB runner with explicit per-migration transactions; verify DuckDB rollback/rollback-fault tests pass.
 - [x] 4.4 Implement failure handling: rollback DDL + OK insert, then upsert one `FAILED` row in a new transaction, then abort; verify exactly-one-FAILED and default-abort tests pass.
 - [x] 4.5 Implement connection policy (embedded reuse vs standalone PRAGMAs `WAL`/`NORMAL`/`foreign_keys=ON`/`busy_timeout=5000` verified before `BEGIN`, no competing writer; DuckDB `temp_directory` set first without a `/data` test path); verify PRAGMA-mode tests pass and refuse-on-incompatible-state is covered.
-- [ ] 4.6 Add an AST/scan guard test rejecting `executescript` and any runtime DDL outside the runner; verify the guard fails on a planted violation.
+- [x] 4.6 Add an AST/scan guard test rejecting `executescript` and any runtime DDL outside the runner; verify the guard fails on a planted violation.
 
 ## 5. CLI apply/status/verify
 
