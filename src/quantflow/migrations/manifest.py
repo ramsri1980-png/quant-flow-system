@@ -21,6 +21,7 @@ MUST resolve inside `migrations/<store>/` with the form `NNN_<slug>.sql`.
 
 from __future__ import annotations
 
+import heapq
 import json
 import re
 from collections.abc import Mapping
@@ -272,6 +273,89 @@ def validate_file_inventory(manifest: Manifest, migrations_root: Path) -> None:
                 )
 
 
+def validate_dependencies(manifest: Manifest) -> None:
+    """Validate store-local dependency existence, cross-store rejection, acyclicity."""
+    ids_by_store = {store: manifest.entry_ids(store) for store in Store}
+    for entry in manifest.entries:
+        same_store = ids_by_store[entry.store]
+        covered = set(manifest.covered_ids(entry.store))
+        for dep in entry.applies_after:
+            if dep in same_store or dep in covered:
+                continue
+            other = next(
+                (s for s in Store if s is not entry.store and dep in ids_by_store[s]), None
+            )
+            if other is not None:
+                raise MigrationValidationError(
+                    f"migration {entry.id!r} declares a cross-store dependency on {dep!r} "
+                    f"({other.value} entry from a {entry.store.value} migration)"
+                )
+            raise MigrationValidationError(f"migration {entry.id!r} depends on unknown id {dep!r}")
+    _detect_cycles(manifest)
+
+
+def _detect_cycles(manifest: Manifest) -> None:
+    for store in Store:
+        entries = [e for e in manifest.entries if e.store is store]
+        if not entries:
+            continue
+        ids = {e.id for e in entries}
+        indegree = dict.fromkeys(ids, 0)
+        adjacency: dict[str, list[str]] = {entry_id: [] for entry_id in ids}
+        for entry in entries:
+            for dep in entry.applies_after:
+                if dep == entry.id:
+                    raise MigrationValidationError(f"migration {entry.id!r} depends on itself")
+                if dep in ids:
+                    adjacency[dep].append(entry.id)
+                    indegree[entry.id] += 1
+        ready = [entry_id for entry_id, degree in indegree.items() if degree == 0]
+        processed = 0
+        while ready:
+            node = ready.pop()
+            processed += 1
+            for dependent in adjacency[node]:
+                indegree[dependent] -= 1
+                if indegree[dependent] == 0:
+                    ready.append(dependent)
+        if processed != len(entries):
+            raise MigrationValidationError(f"dependency cycle among {store.value} migrations")
+
+
+def apply_order(manifest: Manifest, store: Store) -> tuple[ManifestEntry, ...]:
+    """Enabled, non-ADOPT-ONLY entries in stable topological order.
+
+    Ties are broken by numeric slot then ID, with ``000_baseline`` first. The
+    ordering is derived from the dependency graph, never from ``MAX(migration_id)``.
+    """
+    adopt_only = ADOPT_ONLY_SLOTS[store]
+    nodes = {
+        entry.id: entry
+        for entry in manifest.entries
+        if entry.store is store and entry.enabled and entry.slot not in adopt_only
+    }
+    indegree = dict.fromkeys(nodes, 0)
+    adjacency: dict[str, list[str]] = {entry_id: [] for entry_id in nodes}
+    for entry in nodes.values():
+        for dep in entry.applies_after:
+            if dep in nodes:
+                adjacency[dep].append(entry.id)
+                indegree[entry.id] += 1
+    heap = [(entry.slot, entry.id) for entry in nodes.values() if indegree[entry.id] == 0]
+    heapq.heapify(heap)
+    ordered: list[ManifestEntry] = []
+    while heap:
+        _, entry_id = heapq.heappop(heap)
+        ordered.append(nodes[entry_id])
+        for dependent in adjacency[entry_id]:
+            indegree[dependent] -= 1
+            if indegree[dependent] == 0:
+                heapq.heappush(heap, (nodes[dependent].slot, dependent))
+    if len(ordered) != len(nodes):
+        raise MigrationValidationError(f"dependency cycle among enabled {store.value} migrations")
+    return tuple(ordered)
+
+
 def load_manifest(migrations_root: Path) -> Manifest:
     """Read and validate `<migrations_root>/MANIFEST.json`."""
     path = migrations_root / MANIFEST_FILENAME
@@ -288,4 +372,5 @@ def load_manifest(migrations_root: Path) -> Manifest:
     manifest = parse_manifest(raw)
     validate_slots(manifest)
     validate_file_inventory(manifest, migrations_root)
+    validate_dependencies(manifest)
     return manifest
