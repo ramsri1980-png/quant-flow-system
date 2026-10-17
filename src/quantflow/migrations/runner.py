@@ -13,14 +13,18 @@ failure is a hard error and is never recorded as a migration outcome row.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
+from importlib import metadata
+from pathlib import Path
 from typing import Any
 
 from quantflow.domain.errors import MigrationLedgerError
 from quantflow.domain.time import EpochMs, epoch_ms
-from quantflow.migrations.manifest import BASELINE_ID, Store
+from quantflow.migrations.manifest import BASELINE_ID, ManifestEntry, Store
+from quantflow.ports.clock import Clock
 
 #: A DBAPI-style connection: `sqlite3.Connection` or `duckdb.DuckDBPyConnection`.
 #: Both expose ``execute``/``fetchall``; the runner only uses that surface.
@@ -264,3 +268,34 @@ def classify_store(conn: Connection, store: Store) -> StoreState:
     if application_tables(conn, store):
         return StoreState.LEGACY
     return StoreState.FRESH
+
+
+def _app_version() -> str:
+    try:
+        return metadata.version("quantflow")
+    except metadata.PackageNotFoundError as exc:
+        raise MigrationLedgerError(
+            "cannot resolve the quantflow package version via importlib.metadata; "
+            "install the package before running migrations"
+        ) from exc
+
+
+def ok_row_for(entry: ManifestEntry, migrations_root: Path, clock: Clock) -> LedgerRow:
+    """Build the OK ledger row for a successfully applied ``entry``.
+
+    The checksum is the lowercase SHA-256 of the file's exact bytes (no
+    sentinel); `applied_at` comes from the injected Clock; `app_version` comes
+    solely from installed package metadata.
+    """
+    path = migrations_root / entry.path
+    try:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise MigrationLedgerError(f"cannot read migration file {entry.path}: {exc}") from exc
+    return LedgerRow(
+        migration_id=entry.id,
+        checksum=digest,
+        applied_at=clock.now_ms(),
+        app_version=_app_version(),
+        result=LedgerResult.OK,
+    )
