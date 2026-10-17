@@ -1,4 +1,4 @@
-# Repo index (generated 2026-10-16)
+# Repo index (generated 2026-10-17)
 
 - [.github/workflows/repo-index.yml](https://github.com/ramsri1980-png/quant-flow-system/blob/master/.github/workflows/repo-index.yml)
 - [.gitignore](https://github.com/ramsri1980-png/quant-flow-system/blob/master/.gitignore)
@@ -268,6 +268,7 @@
 - [tests/unit/test_clock.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tests/unit/test_clock.py)
 - [tests/unit/test_constants_check.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tests/unit/test_constants_check.py)
 - [tests/unit/test_direct_unit_construction.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tests/unit/test_direct_unit_construction.py)
+- [tests/unit/test_openspec_layout.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tests/unit/test_openspec_layout.py)
 - [tests/unit/test_reference_bundle.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tests/unit/test_reference_bundle.py)
 - [tests/unit/test_wall_clock_scan.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tests/unit/test_wall_clock_scan.py)
 - [tools/apply_doc_patches.py](https://github.com/ramsri1980-png/quant-flow-system/blob/master/tools/apply_doc_patches.py)
