@@ -46,6 +46,7 @@ STRUCTURAL_ALLOWLIST = {
     "ADOPT_ONLY_SLOTS": "ADOPT-ONLY slot policy (ARCH V2 C.3; 010a D5)",
     "LEDGER_TABLES": "authoritative ledger table names (SPEC V2 Sec 19.2; ARCH V2 C.1)",
     "LEDGER_DDL": "authoritative ledger DDL, not tunable config (SPEC V2 Sec 19.2; ARCH V2 C.1)",
+    "SQLITE_PRAGMAS": "required standalone SQLite settings, structural not tunable (ARCH V2 C.1; 010a D14)",
 }
 
 

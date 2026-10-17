@@ -14,12 +14,15 @@ failure is a hard error and is never recorded as a migration outcome row.
 from __future__ import annotations
 
 import hashlib
+import sqlite3
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from importlib import metadata
 from pathlib import Path
 from typing import Any
+
+import duckdb
 
 from quantflow.domain.errors import MigrationLedgerError, MigrationValidationError
 from quantflow.domain.time import EpochMs, epoch_ms
@@ -29,6 +32,7 @@ from quantflow.migrations.manifest import (
     Manifest,
     ManifestEntry,
     Store,
+    apply_order,
 )
 from quantflow.ports.clock import Clock
 
@@ -329,3 +333,252 @@ def check_baseline_closure(manifest: Manifest, store: Store, applied_ok: frozens
             raise MigrationValidationError(
                 f"migration {entry.id!r}: unsatisfied dependency {dep!r}"
             )
+
+
+# --------------------------------------------------------------------------- #
+# Connection policy (design D14, ARCH V2 §C.1)
+# --------------------------------------------------------------------------- #
+
+#: Required standalone SQLite settings. WAL keeps a single writer; NORMAL is the
+#: sanctioned durability level; foreign_keys is enforced; busy_timeout avoids
+#: spurious lock failures. Values verified, never assumed (constitution §1).
+SQLITE_PRAGMAS: Mapping[str, int | str] = {
+    "journal_mode": "wal",
+    "synchronous": 1,
+    "foreign_keys": 1,
+    "busy_timeout": 5000,
+}
+
+#: Literal read statements (no string-built SQL) used to verify the pragmas.
+_SQLITE_PRAGMA_READ: Mapping[str, str] = {
+    "journal_mode": "PRAGMA journal_mode",
+    "synchronous": "PRAGMA synchronous",
+    "foreign_keys": "PRAGMA foreign_keys",
+    "busy_timeout": "PRAGMA busy_timeout",
+}
+
+_DATA_PATH_PREFIX = "/data"
+
+
+def configure_sqlite_pragmas(conn: sqlite3.Connection) -> None:
+    """Set the required standalone PRAGMAs (call outside any transaction)."""
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("PRAGMA busy_timeout=5000")
+
+
+def verify_sqlite_pragmas(conn: sqlite3.Connection) -> None:
+    """Refuse incompatible state: every required PRAGMA must already match.
+
+    Read-only: the embedded (quantd-owned) connection is checked, never
+    reconfigured, so the runner never mutates another writer's settings.
+    """
+    mismatches: list[str] = []
+    for name, expected in SQLITE_PRAGMAS.items():
+        raw = conn.execute(_SQLITE_PRAGMA_READ[name]).fetchone()[0]
+        actual = int(raw) if isinstance(expected, int) else str(raw).lower()
+        if actual != expected:
+            mismatches.append(f"{name}={actual!r} (require {expected!r})")
+    if mismatches:
+        raise MigrationValidationError("incompatible SQLite PRAGMAs: " + "; ".join(mismatches))
+
+
+def open_standalone_sqlite(path: Path) -> sqlite3.Connection:
+    """Open a standalone writer with the required PRAGMAs, verified before BEGIN.
+
+    `isolation_level=None` disables sqlite3's implicit transaction handling so the
+    runner controls explicit `BEGIN`/`COMMIT` (design D13).
+    """
+    conn = sqlite3.connect(path, isolation_level=None)
+    try:
+        configure_sqlite_pragmas(conn)
+        verify_sqlite_pragmas(conn)
+    except Exception:
+        conn.close()
+        raise
+    return conn
+
+
+def _reject_data_path(path: Path) -> None:
+    resolved = str(path)
+    if resolved == _DATA_PATH_PREFIX or resolved.startswith(_DATA_PATH_PREFIX + "/"):
+        raise MigrationValidationError(
+            f"refusing to use a /data path for migration scratch space: {resolved}"
+        )
+
+
+def open_standalone_duckdb(path: Path, temp_directory: Path) -> duckdb.DuckDBPyConnection:
+    """Open a standalone DuckDB writer with `temp_directory` set first.
+
+    The caller supplies the scratch path (documented path policy); tests never
+    invent a `/data` path, and a `/data` target is refused outright.
+    """
+    _reject_data_path(temp_directory)
+    temp_directory.mkdir(parents=True, exist_ok=True)
+    conn = duckdb.connect(str(path))
+    try:
+        conn.execute("SET temp_directory = ?", (str(temp_directory),))
+    except Exception:
+        conn.close()
+        raise
+    return conn
+
+
+# --------------------------------------------------------------------------- #
+# Statement splitting (design D13)
+# --------------------------------------------------------------------------- #
+
+
+def split_statements(sql: str) -> tuple[str, ...]:
+    """Split a migration body into executable statements.
+
+    Uses ``sqlite3.complete_statement`` (the stdlib tokenizer) rather than a
+    naive ``;`` split, so semicolons inside string literals, quoted identifiers,
+    comments, and ``CREATE TRIGGER ... BEGIN ... END`` bodies are respected.
+    """
+    statements: list[str] = []
+    start = 0
+    for index, char in enumerate(sql):
+        if char != ";":
+            continue
+        candidate = sql[start : index + 1]
+        if sqlite3.complete_statement(candidate):
+            stripped = candidate.strip()
+            if stripped != ";":
+                statements.append(stripped)
+            start = index + 1
+    tail = sql[start:].strip()
+    if tail:
+        statements.append(tail)
+    return tuple(statements)
+
+
+# --------------------------------------------------------------------------- #
+# Atomic apply (design D7/D9/D12/D13)
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class ApplyResult:
+    """Outcome of one store's apply run."""
+
+    store: Store
+    applied: tuple[str, ...]
+    skipped: tuple[str, ...]
+
+
+def _require_dependencies(
+    entry: ManifestEntry,
+    satisfied: set[str],
+    covered: set[str],
+    baseline_applied: bool,
+) -> None:
+    for dep in entry.applies_after:
+        if dep in satisfied:
+            continue
+        if dep in covered and baseline_applied:
+            continue
+        raise MigrationValidationError(f"migration {entry.id!r}: unsatisfied dependency {dep!r}")
+
+
+def _record_failure(conn: Connection, store: Store, entry: ManifestEntry, clock: Clock) -> None:
+    """Upsert exactly one FAILED row in a NEW transaction (design D12).
+
+    The ledger PK allows one row per `migration_id`, so a repeated failure
+    overwrites rather than appends.
+    """
+    row = LedgerRow(
+        migration_id=entry.id,
+        checksum=entry.sha256,
+        applied_at=clock.now_ms(),
+        app_version=_app_version(),
+        result=LedgerResult.FAILED,
+    )
+    conn.execute("BEGIN")
+    try:
+        write_row(conn, store, row)
+        conn.execute("COMMIT")
+    except Exception:
+        _rollback_quietly(conn)
+        raise
+
+
+def apply_entry(
+    conn: Connection,
+    store: Store,
+    entry: ManifestEntry,
+    migrations_root: Path,
+    clock: Clock,
+) -> None:
+    """Apply one migration atomically: rollback DDL + OK row, then a FAILED row.
+
+    The file's statements run inside one explicit `BEGIN`/`COMMIT`; on any
+    failure nothing partial is committed and the outcome is recorded in a new
+    transaction before the error propagates (design D7/D13).
+    """
+    path = migrations_root / entry.path
+    try:
+        body = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise MigrationLedgerError(f"cannot read migration file {entry.path}: {exc}") from exc
+    statements = split_statements(body)
+    ok_row = ok_row_for(entry, migrations_root, clock)
+    conn.execute("BEGIN")
+    try:
+        for statement in statements:
+            conn.execute(statement)
+        write_row(conn, store, ok_row)
+        conn.execute("COMMIT")
+    except Exception as exc:
+        _rollback_quietly(conn)
+        _record_failure(conn, store, entry, clock)
+        raise MigrationLedgerError(
+            f"migration {entry.id!r} failed and was rolled back: {exc}"
+        ) from exc
+
+
+def apply_store(
+    conn: Connection,
+    store: Store,
+    manifest: Manifest,
+    migrations_root: Path,
+    clock: Clock,
+) -> ApplyResult:
+    """Apply the enabled, non-ADOPT-ONLY migrations of ``manifest`` to ``store``.
+
+    Fails closed: a legacy store aborts before anything is written, an existing
+    FAILED row blocks apply (no automatic retry), and dependency closure is
+    evaluated against the OK rows already present plus those applied in order.
+    """
+    if classify_store(conn, store) is StoreState.LEGACY:
+        raise MigrationValidationError(
+            f"{store.value} store contains application schema without an OK baseline; "
+            "aborting pending an explicit adoption plan"
+        )
+    bootstrap_ledger(conn, store)
+
+    failed = failed_ids(conn, store)
+    if failed:
+        raise MigrationLedgerError(
+            f"{store.value} store has failed migration(s) {sorted(failed)}; "
+            "apply aborts until they are explicitly resolved"
+        )
+
+    applied_ok = applied_ok_ids(conn, store)
+    satisfied = set(applied_ok)
+    covered = set(manifest.covered_ids(store))
+    baseline_applied = BASELINE_ID in satisfied
+    applied: list[str] = []
+    skipped: list[str] = []
+    for entry in apply_order(manifest, store):
+        if entry.id in applied_ok:
+            skipped.append(entry.id)
+            continue
+        _require_dependencies(entry, satisfied, covered, baseline_applied)
+        apply_entry(conn, store, entry, migrations_root, clock)
+        applied.append(entry.id)
+        satisfied.add(entry.id)
+        if entry.id == BASELINE_ID:
+            baseline_applied = True
+    return ApplyResult(store=store, applied=tuple(applied), skipped=tuple(skipped))
