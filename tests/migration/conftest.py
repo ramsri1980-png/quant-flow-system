@@ -78,3 +78,13 @@ def build_manifest(
 @pytest.fixture(params=[m.Store.SQLITE, m.Store.DUCKDB], ids=["sqlite", "duckdb"])
 def store(request: pytest.FixtureRequest) -> m.Store:
     return request.param
+
+
+_MIGRATION_SUITE_ROOT = Path(__file__).parent
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Tag every test in this directory with the registered `integration` marker."""
+    for item in items:
+        if Path(str(item.path)).is_relative_to(_MIGRATION_SUITE_ROOT):
+            item.add_marker(pytest.mark.integration)

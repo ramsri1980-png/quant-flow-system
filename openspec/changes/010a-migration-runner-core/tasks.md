@@ -44,7 +44,7 @@
 ## 6. Equivalence & integration timing
 
 - [x] 6.1 Add the closed-manifest-subset fresh-vs-upgrade schema-equivalence test using canonical `sqlite_master` and DuckDB table/column introspection (not byte-identical files); verify it passes.
-- [ ] 6.2 Wire the `tests/migration/` integration suite and verify it completes in < 10 s; verify no test path resolves under `/data`.
+- [x] 6.2 Wire the `tests/migration/` integration suite and verify it completes in < 10 s; verify no test path resolves under `/data`.
 
 ## 7. Final verification
 
