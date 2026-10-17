@@ -10,7 +10,7 @@
 ---
 
 <!-- AUTO:CURRENT-STATE:START -->
-## CURRENT STATE (auto 2026-10-17T04:30:12Z)
+## CURRENT STATE (auto 2026-10-17T14:16:39Z)
 
 | Item | Status |
 |---|---|
@@ -21,12 +21,12 @@
 | Feature 005a | COMPLETE — tag `feature-005a-complete` |
 | Feature 005b | COMPLETE — tag `feature-005b-complete` |
 | Feature 005c | COMPLETE — tag `feature-005c-complete` |
-| Repo | branch `master` |
-| Working tree | clean |
+| Repo | branch `feature/010a-migration-runner-core` |
+| Working tree | M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md |
 | Tags | `feature-005-complete`, `feature-005a-complete`, `feature-005b-complete`, `feature-005c-complete`, `foundation-complete`, `poc-transport-complete`, `session3-complete` |
-| Last commit | `fff528c Update repo index` |
+| Last commit | `e10dd30 fix(openspec): remove stale 005b-domain-fail-closed source after archive` |
 
-**Next action:** Continue active change: 005b-domain-fail-closed
+**Next action:** Continue active change: 010a-migration-runner-core
 
 <!-- AUTO:CURRENT-STATE:END -->
 
@@ -876,6 +876,51 @@ RQ-004	grade/state/episode split	Before baseline migration freeze (005)
 RQ-005	package_quote_observation_id at evidence boundaries	Before 040/051
 RQ-006	"Per prior" placeholders	Per feature at clarify
 RQ-007	MCP SDK v1.30.0 → v2.2.0 migration (FastMCP→MCPServer, camelCase→snake_case, httpx→httpx2, streamablehttp_client removal, McpError→MCPError). Decide via ADR-004.	Before Feature 070
+
+C13 — DEALER POSITIONING (DEFERRED IMPLEMENTATION)
+
+Plan: openspec/c13-dealer-positioning-implementation-plan.md
+Status: PROPOSED -- operator approval pending
+Blocks: Feature 033 (FDI), Feature 034 (Dealer Hedging Pressure),
+        Feature 035 (Flow Strength and Confluence),
+        Feature 041 (Decision State Selection),
+        and any downstream kernel that consumes dealer gamma,
+        dealer sign, or aggressor classification.
+
+Gate before implementing any blocked feature:
+
+  Stage A -- Design and contract verification
+    C13-01 baseline sign model (OI_NAIVE)
+    C13-03 model independence and disagreement semantics
+    C13-04 source fields and provenance matrix
+    Existing evaluation protocol and Q6 review
+    Operator approves proposed design changes
+
+  Stage B -- Guardrails
+    C13-05 estimator approval boundary
+    C13-07 AST/static enforcement with CI negative and positive fixtures
+
+  Then Stage C (shadow logging) and Stage D (model research)
+
+Why gated:
+
+  Constitution line 38 forbids generating a baseline from the patched
+  final DDL. Feature 034's H_$ formula depends on dealer gamma and sign
+  conventions defined in C13-01. Building 034 before those contracts
+  exist risks silently adopting an unapproved estimator and
+  contaminating the decision path.
+
+Do NOT implement any new dealer positioning estimator, numerical
+constant, or 0DTE override until the corresponding C13 stage has been
+approved by the operator.
+
+Reference:
+  Plan file: openspec/c13-dealer-positioning-implementation-plan.md
+  Linked from: openspec/conflicts-and-gaps.md (## C13 section)
+  Related: Q6 in conflicts-and-gaps.md (approval-pending constant
+  enforcement; 005c shipped approved() + AST scan -- C13-05 builds
+  on that primitive)
+
 ABSOLUTE PROHIBITIONS
 
     time.sleep() in async
@@ -1697,4 +1742,58 @@ d1cd170 docs: runbook auto-update after 005d decisions
 Working tree:
 ```
 (clean)
+```
+
+### Runbook auto-update - 2026-10-17T14:10:20Z
+
+Branch: `feature/010a-migration-runner-core`
+
+Recent commits:
+```
+360d865 test(010a): group 2.5 — baseline_covered fail-closed boundary tests (task 2.5)
+b26e0ff feat(010a): group 2.4 — dependencies, cycles, stable topological order (task 2.4)
+08857a4 feat(010a): group 2.3 — slot policy + unmanifested-file validation (task 2.3)
+b0a978c feat(010a): group 2.2 — manifest schema loading + path safety (task 2.2)
+b7168b4 test(010a): group 2.1 — red manifest validator test classes (task 2.1)
+a774ebb chore(010a): fix pre-existing ruff format drift + record D2 CLI amendment
+cfbb173 feat(010a): group 1 — package scaffold, CLI entry, migration error types (tasks 1.1-1.4)
+321b2a9 docs(010a): propose artifacts via qf-propose + resolve OQ-1/OQ-2
+7508ada chore(010a): pre-resolve 5 conflicts for qf-propose
+198af98 docs(010a): add migration runner core prompt
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+ M openspec/conflicts-and-gaps.md
+ M openspec/formulas-dealer-greeks.md
+ M src/quantflow/migrations/manifest.py
+?? openspec/c13-dealer-positioning-implementation-plan.md
+```
+
+### Runbook auto-update - 2026-10-17T14:16:39Z
+
+Branch: `feature/010a-migration-runner-core`
+
+Recent commits:
+```
+e10dd30 fix(openspec): remove stale 005b-domain-fail-closed source after archive
+360d865 test(010a): group 2.5 — baseline_covered fail-closed boundary tests (task 2.5)
+b26e0ff feat(010a): group 2.4 — dependencies, cycles, stable topological order (task 2.4)
+08857a4 feat(010a): group 2.3 — slot policy + unmanifested-file validation (task 2.3)
+b0a978c feat(010a): group 2.2 — manifest schema loading + path safety (task 2.2)
+b7168b4 test(010a): group 2.1 — red manifest validator test classes (task 2.1)
+a774ebb chore(010a): fix pre-existing ruff format drift + record D2 CLI amendment
+cfbb173 feat(010a): group 1 — package scaffold, CLI entry, migration error types (tasks 1.1-1.4)
+321b2a9 docs(010a): propose artifacts via qf-propose + resolve OQ-1/OQ-2
+7508ada chore(010a): pre-resolve 5 conflicts for qf-propose
+```
+
+Working tree:
+```
+M docs/runbooks/QUANTFLOW-RUNBOOK-v3.3.md
+ M openspec/conflicts-and-gaps.md
+ M openspec/formulas-dealer-greeks.md
+ M src/quantflow/migrations/manifest.py
+?? openspec/c13-dealer-positioning-implementation-plan.md
 ```

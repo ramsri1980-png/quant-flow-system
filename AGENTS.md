@@ -22,5 +22,24 @@ Non-negotiables
 14. Reuse first: search openspec/modules.md and src/ before creating anything; extend/compose existing ports and kernels.
 15. Every design.md has a "Reuse" section (modules reused; why any new module is needed).
 16. Dealer/greeks logic follows openspec/formulas-dealer-greeks.md: dealer sign is an explicit parameter, features run shadow-only until outcomes justify them.
-17. Reading cost: to read part of a source file, call Code Mode `harness-tools.rip_file_lines` with exact line ranges (never read a whole spec volume). For code layout use `harness-tools.get_repo_skeleton` first. Native read must pass a limit of 120 lines or less. Every grep must use head_limit 20 or less. Use only files and sections named in the brief or tasks.
-18. Tool routing (Code Mode `harness-tools.*`): locating code -> get_repo_skeleton before any glob/grep; reading code or spec -> rip_file_lines; before changing, renaming or deleting any symbol -> find_dependent_references and list the dependents; qf-build code edits -> apply_search_replace (not native edit); markdown under openspec/ -> native edit. Do not fall back to native read/grep for these unless the harness call errors.
+
+are unavailable in the current session, use available native tools.
+For discovery, use native search/glob. For reading, use native read
+with a maximum of 120 lines per call. For grep, use head_limit <= 20.
+Before modifying symbols, search for dependent references and report
+them. Preserve all other safety, specification, and validation rules.
+Never call tools that are not exposed in the current session.
+When harness tools are available, follow rules 17 and 18 normally.
+
+## Lean tool usage
+
+- **Read:** Use native search to locate files, then read exact line ranges
+  (`sed -n 'START,ENDp'`). Avoid full-file dumps; expand only as needed.
+- **Edit:** Use native targeted edits. Preserve unrelated content and inspect
+  bounded `git diff` output before committing.
+- **Execute:** Redirect verbose command output to local logs and return concise
+  summaries, failures, and exit codes. Retrieve full details only when needed.
+- **Pytest:** Use `python3 tools/quant_capture.py --lines 35 -- <project-python>
+  -m pytest -q --tb=short <selected tests>`. Use the project's test environment,
+  preserve requested test scope, and inspect `FULL_LOG` selectively on failure.
+  Collection errors are not test failures. Never claim success on nonzero exit.

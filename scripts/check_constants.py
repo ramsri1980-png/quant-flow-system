@@ -40,6 +40,13 @@ STRUCTURAL_ALLOWLIST = {
     "DURATION_NAME_SUFFIXES": "SPEC V1 Sec 19.8.3 Rule 2 naming table",
     "HOST": "POC adapter endpoint config (env-derived; not decision path)",
     "PORT": "POC adapter endpoint config (env-derived; not decision path)",
+    "MANIFEST_FILENAME": "010a brief D1 manifest filename (SPEC/ARCH structural)",
+    "BASELINE_ID": "000_baseline logical ID (SPEC V2 19.2; ARCH V2 C.3; 010a D10)",
+    "NEVER_SLOTS": "NEVER-slot policy (ARCH V2 C.3; 010a D5)",
+    "ADOPT_ONLY_SLOTS": "ADOPT-ONLY slot policy (ARCH V2 C.3; 010a D5)",
+    "LEDGER_TABLES": "authoritative ledger table names (SPEC V2 Sec 19.2; ARCH V2 C.1)",
+    "LEDGER_DDL": "authoritative ledger DDL, not tunable config (SPEC V2 Sec 19.2; ARCH V2 C.1)",
+    "SQLITE_PRAGMAS": "required standalone SQLite settings, structural not tunable (ARCH V2 C.1; 010a D14)",
 }
 
 

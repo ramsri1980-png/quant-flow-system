@@ -26,6 +26,9 @@ dependencies = [
     "pandas-market-calendars>=5.0",
 ]
 
+[project.scripts]
+quantflow = "quantflow.cli.main:main"
+
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -61,6 +64,7 @@ packages = ["quantflow"]
 addopts = "-ra --strict-markers --strict-config"
 asyncio_mode = "auto"
 markers = [
+    "integration: tests/migration/ integration suite (010a task 6.2)",
     "live: tests requiring authorized network access",
     "slow: tests taking over 1 second",
 ]

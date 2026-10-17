@@ -16,6 +16,8 @@ Rule: the doc with authority wins (constitution §2). Items are BLOCKING for the
 | C9 | SPEC V2 §19.3 spx_crossing_state_history | `cooldown_until INTEGER, rearmed_at INTEGER` in DuckDB violate §19.8.3 Rule 1 (epoch cols must be BIGINT). | Change to BIGINT in the baseline. | 010, 054 |
 | C10 | ARCH V2 §C.3 | Final DDL in §19.2 contains 070/071 tables, but baseline must stop at SQLite 069/DuckDB 041. | Generate baseline only from the historical chain; apply 070/071, 042/050 as pending. Historical migrations 001–064/001–037 may not exist yet. | 010 |
 | C11 | Runbook Task 4 | ADR-001 (anti-detection scope) undecided. | Choose interpretation A (authorized session management) or stop. | 052, 064 |
+| C13 | ARCH V2 §C.3 vs brief 010a D1 | Migration manifest named `MANIFEST.md` in ARCH; brief mandates a single machine-readable `migrations/MANIFEST.json` with a defined entry schema. | Make `MANIFEST.json` canonical (log drift); queue an ARCH V2 §C.3 wording amendment. Resolve before 010a apply. | 010a, 010b |
+| C14 | SPEC V2 §19.2 vs brief 010a D12 | Ledger PK `migration_id` stores one row per migration, so it cannot hold per-attempt retry history; brief requires an audited retry workflow. | Keep one row per `migration_id` (retry = FAILED→OK UPDATE), record the audited attempt trail outside the ledger; if a per-attempt trail is required, amend the SPEC contract (do not change DDL silently). | 010a, 010b |
 | C12 | SPEC V1/ARCH V4 dealer logic | No BS gamma/vanna/charm formulas, units, T clamp or carry in any volume; dealer sign undefined ("per signed fixture"); D.17–D.20/D.23/D.24 headings only; D.14c GammaAlign ORs opposite mechanisms, D_c=max biases up, vanna uses cluster-contaminated ΔIV and a likely unreachable 0.10 threshold; D.21 mixes charm into 0DTE; H.2 constants arbitrary. | Adopt openspec/formulas-dealer-greeks.md (F1–F8) after operator approval; shadow-first. | 031, 033, 034, 035, 036 |
 
 ## Gaps (heading-only or deferred in the docs; briefs mark these as Open Questions)
@@ -202,3 +204,57 @@ resolved appear under "## Resolved (2026-10-16)" further down.
   rename to `_RATIO`. Not in 005c's declared frozen scope (ARCH Vol 1 + SPEC Vol 1
   §19.8.3 only). Follow-up change needed to align SPEC Vol 3 with the renamed
   constant, or accept the drift as documentation-only. Non-blocking.
+
+## 010a Open Questions (pre-resolved 2026-10-17)
+
+| ID | Conflict | Resolution |
+|---|---|---|
+| 010a-Q1 | ARCH says MANIFEST.md; 010a prompt mandates MANIFEST.json | 010a uses MANIFEST.json; 010b reconciles via design.md D16 |
+| 010a-Q2 | ARCH uses 000_baseline_v2.0.5.1.sql; 010a uses ID 000_baseline | 000_baseline is logical ID; filename per D10 |
+| 010a-Q3 | DuckDB 050 PROPOSED CORE REPAIR vs ADOPT-ONLY in D5 | 010a classifies as ADOPT-ONLY per D5 |
+| 010a-Q4 | Ledger PK cannot hold per-attempt history | Retry audit in operator_control_audit per D12 |
+| 010a-Q5 | Python 3.14 vs 3.12; symlink | Non-issue; pyproject is ground truth |
+
+## C13 — Dealer Positioning Derivation
+
+**Status: PROPOSED — operator approval pending.**
+**Scope: design clarification; no production model change.**
+
+1. **C13-01 — Baseline:** Preserve F3 `OI_NAIVE` as a labelled
+   dealer-position assumption, not observed inventory.
+2. **C13-02 — Alternatives:** Permit explicit per-underlying
+   alternative sign assumptions in shadow research only.
+   No automatic prior selection or production promotion.
+3. **C13-03 — Independence:** Do not describe two models as
+   independent evidence when they share alerts, OI, providers,
+   or other material inputs. Record shared dependencies.
+4. **C13-04 — Provenance:** Distinguish observed alert data,
+   inferred aggressor side, unknown customer identity,
+   alert-only volume, prior-day OI, and retrospective T+1
+   opening/closing evidence. Unknown remains unknown.
+5. **C13-05 — Estimator:** Reject the proposed flow/OI blend,
+   unvalidated constants, automatic learning, 0DTE override,
+   and uncalibrated confidence. Do not infer full dealer
+   inventory from pre-filtered alerts.
+6. **C13-06 — Evaluation:** Reuse
+   `openspec/evaluation-protocol.md`, brief 041b, and
+   SPEC Vol 6 §F.3 sample-size rules. Require per-underlying
+   holdouts, leakage checks, provenance, and sensitivity
+   testing. Negation is a sensitivity test, not a new
+   production model.
+7. **C13-07 — Enforcement:** Shadow-first. Propose Q6-style
+   AST enforcement preventing unapproved estimators from
+   entering production decision paths. Do not claim the
+   guard exists before it is implemented and tested.
+
+**Implementation constraints:** No migration 053, no frozen
+reference edits, no `tools/apply_doc_patches.py`, no invented
+runtime implementation, and no automatic production promotion.
+Classify fields using SPEC/ARCH contracts. Propose storage only
+if demonstrated necessary; do not assume research tables exist.
+
+**Closure:** Operator approves the design decisions separately.
+Model effectiveness and production promotion require empirical
+validation under the existing evaluation protocol.
+
+Implementation plan: `openspec/c13-dealer-positioning-implementation-plan.md`
