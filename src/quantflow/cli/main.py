@@ -131,7 +131,7 @@ def status(
 
             # Get applied migrations (OK rows)
             applied_ok = r.applied_ok_ids(conn, store_obj)
-            pending_count = len(applied_ok)  # This is actually applied count
+            applied_count = len(applied_ok)
 
             # Get last successful migration
             last_successful = None
@@ -148,7 +148,7 @@ def status(
             failed_ids = r.failed_ids(conn, store_obj)
 
             typer.echo(f"Store: {store_obj.value}")
-            typer.echo(f"Applied migrations: {pending_count}")
+            typer.echo(f"Applied migrations: {applied_count}")
             typer.echo(f"Last successful migration: {last_successful or 'None'}")
             if failed_ids:
                 typer.echo(f"Failed migrations: {sorted(failed_ids)} (blocking apply)")
@@ -241,14 +241,14 @@ def verify(
             ledger_rows = r.ledger_rows(conn, store_obj)
             ledger_id_to_row = {row.migration_id: row for row in ledger_rows}
 
-            # 3. Verify every manifest entry has a corresponding ledger row with matching checksum
+            # 3. Verify applied entries have matching checksums (pending is NOT corruption, D15)
+            pending_ids: list[str] = []
             for entry in manifest_obj.entries:
                 ledger_row = ledger_id_to_row.get(entry.id)
                 if ledger_row is None:
-                    raise MigrationValidationError(
-                        f"manifest entry {entry.id!r}: not found in ledger"
-                    )
-
+                    # Pending migration — legitimate state, not a failure (D15)
+                    pending_ids.append(entry.id)
+                    continue
                 if entry.sha256 != ledger_row.checksum:
                     raise MigrationValidationError(
                         f"checksum mismatch for {entry.id!r}: "
@@ -315,7 +315,12 @@ def verify(
                     )
 
             # All checks passed
-            typer.echo("Verification successful: store/manifest/ledger are consistent")
+            if pending_ids:
+                typer.echo(
+                    f"Verification successful: {len(pending_ids)} pending migration(s) — {sorted(pending_ids)}"
+                )
+            else:
+                typer.echo("Verification successful: store/manifest/ledger are consistent")
 
         except MigrationManifestError as exc:
             typer.echo(f"Manifest error: {exc}", err=True)
@@ -336,6 +341,9 @@ def retry_failed(
     store: str,
     migration_id: str,
     reason: str,
+    manifest_path: Path = typer.Option(  # noqa: B008 — Typer Option-in-default is idiomatic
+        Path("migrations/MANIFEST.json"), help="Path to migrations manifest."
+    ),
 ) -> None:
     """Retry a failed migration with audit logging (OQ-1 resolution)."""
     if not reason.strip():
@@ -383,7 +391,6 @@ def retry_failed(
             # 2. Verify no partial schema changes and checksum match
             # This is simplified - in a full implementation we'd need to load the manifest
             # and verify the file still matches the recorded checksum
-            manifest_path = Path("migrations/MANIFEST.json")
             if manifest_path.exists():
                 manifest_obj = m.load_manifest(manifest_path.parent)
                 manifest_entry = next(
@@ -436,11 +443,31 @@ def retry_failed(
                         clock = SystemClock()
                         r.apply_entry(conn, store_obj, manifest_entry, manifest_path.parent, clock)
 
-                # Write audit log entry (operator_control_audit table would be created by 010b)
-                # For 010a, we'll just log to stdout as specified in the resolution
-                typer.echo(
-                    f'AUDIT: migration_retry_failed store={store_obj.value} migration_id={migration_id} reason="{reason}"'
-                )
+                # Write audit log entry (D12). operator_control_audit is created by
+                # 010b baseline; if table absent, fall back to stdout audit line.
+                try:
+                    conn.execute(
+                        "INSERT INTO operator_control_audit "
+                        "(ts, actor, channel, action, target_ref, old_value_json, new_value_json, reason) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            int(__import__("time").time() * 1000),
+                            "operator",
+                            "QUANTCTL",
+                            "migration_retry_failed",
+                            migration_id,
+                            None,
+                            None,
+                            reason,
+                        ),
+                    )
+                    typer.echo(f"AUDIT (db): migration_retry_failed {migration_id}")
+                except Exception:
+                    # Table may not exist yet (010a has no baseline; 010b creates it)
+                    typer.echo(
+                        f"AUDIT (stdout fallback): migration_retry_failed "
+                        f'store={store_obj.value} migration_id={migration_id} reason="{reason}"'
+                    )
 
                 conn.execute("COMMIT")
                 typer.echo(f"Successfully retried migration {migration_id}")
