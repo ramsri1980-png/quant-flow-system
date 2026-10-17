@@ -10,7 +10,7 @@ import typer
 
 from quantflow.migrations import manifest as m
 from quantflow.migrations import runner as r
-from quantflow.ports.clock import Clock
+from quantflow.adapters.clock import SystemClock
 
 app = typer.Typer(
     help="QuantFlow operator CLI.",
@@ -28,7 +28,6 @@ migrate_app = typer.Typer(
 def apply(
     store: str,
     manifest_path: Path,
-    clock: Clock,
 ) -> None:
     """Apply pending migrations to the selected store."""
     # Parse store
@@ -59,7 +58,7 @@ def apply(
 
         try:
             # Apply migrations
-            result = r.apply_store(conn, store_obj, manifest_obj, manifest_path.parent, clock)
+            result = r.apply_store(conn, store_obj, manifest_obj, manifest_path.parent, SystemClock())
             typer.echo(
                 f"Successfully applied {len(result.applied)} migration(s) to {store_obj.value} store."
             )
@@ -268,12 +267,12 @@ def verify(
             # 6. Verify slot policy (NEVER and ADOPT-ONLY)
             for entry in manifest_obj.entries:
                 if entry.store is store_obj:
-                    if entry.slot in r.NEVER_SLOTS[entry.store]:
+                    if entry.slot in m.NEVER_SLOTS[entry.store]:
                         raise m.MigrationValidationError(
                             f"migration {entry.id!r} uses a reserved {entry.store.value} slot "
                             f"({entry.slot:03d})"
                         )
-                    if entry.slot in r.ADOPT_ONLY_SLOTS[entry.store]:
+                    if entry.slot in m.ADOPT_ONLY_SLOTS[entry.store]:
                         raise m.MigrationValidationError(
                             f"migration {entry.id!r} is ADOPT-ONLY and cannot be applied "
                             f"(requires operator approval)"
@@ -423,8 +422,6 @@ def retry_failed(
                     )
                     if manifest_entry:
                         # Use the system clock for consistency
-                        from quantflow.adapters.clock import SystemClock
-
                         clock = SystemClock()
                         r.apply_entry(conn, store_obj, manifest_entry, manifest_path.parent, clock)
 
@@ -453,6 +450,9 @@ def retry_failed(
     except Exception as exc:
         typer.echo(f"Unexpected error: {exc}", err=True)
         raise typer.Exit(code=2) from None
+
+
+app.add_typer(migrate_app, name="migrate")
 
 
 def main() -> None:
