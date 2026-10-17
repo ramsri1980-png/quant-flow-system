@@ -21,9 +21,15 @@ from importlib import metadata
 from pathlib import Path
 from typing import Any
 
-from quantflow.domain.errors import MigrationLedgerError
+from quantflow.domain.errors import MigrationLedgerError, MigrationValidationError
 from quantflow.domain.time import EpochMs, epoch_ms
-from quantflow.migrations.manifest import BASELINE_ID, ManifestEntry, Store
+from quantflow.migrations.manifest import (
+    ADOPT_ONLY_SLOTS,
+    BASELINE_ID,
+    Manifest,
+    ManifestEntry,
+    Store,
+)
 from quantflow.ports.clock import Clock
 
 #: A DBAPI-style connection: `sqlite3.Connection` or `duckdb.DuckDBPyConnection`.
@@ -299,3 +305,27 @@ def ok_row_for(entry: ManifestEntry, migrations_root: Path, clock: Clock) -> Led
         app_version=_app_version(),
         result=LedgerResult.OK,
     )
+
+
+def check_baseline_closure(manifest: Manifest, store: Store, applied_ok: frozenset[str]) -> None:
+    """Fail closed unless every applied dependency is satisfied.
+
+    A dependency is satisfied by a recorded OK ledger row. IDs listed in the
+    informational `baseline_covered` metadata are satisfied only by the real OK
+    baseline row — coverage is never fabricated into a ledger row (design D11).
+    Disabled and ADOPT-ONLY entries are not applied, so they are not checked.
+    """
+    covered = set(manifest.covered_ids(store))
+    baseline_applied = BASELINE_ID in applied_ok
+    adopt_only = ADOPT_ONLY_SLOTS[store]
+    for entry in manifest.entries:
+        if entry.store is not store or not entry.enabled or entry.slot in adopt_only:
+            continue
+        for dep in entry.applies_after:
+            if dep in applied_ok:
+                continue
+            if dep in covered and baseline_applied:
+                continue
+            raise MigrationValidationError(
+                f"migration {entry.id!r}: unsatisfied dependency {dep!r}"
+            )

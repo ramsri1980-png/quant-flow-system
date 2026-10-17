@@ -44,6 +44,8 @@ STRUCTURAL_ALLOWLIST = {
     "BASELINE_ID": "000_baseline logical ID (SPEC V2 19.2; ARCH V2 C.3; 010a D10)",
     "NEVER_SLOTS": "NEVER-slot policy (ARCH V2 C.3; 010a D5)",
     "ADOPT_ONLY_SLOTS": "ADOPT-ONLY slot policy (ARCH V2 C.3; 010a D5)",
+    "LEDGER_TABLES": "authoritative ledger table names (SPEC V2 Sec 19.2; ARCH V2 C.1)",
+    "LEDGER_DDL": "authoritative ledger DDL, not tunable config (SPEC V2 Sec 19.2; ARCH V2 C.1)",
 }
 
 
