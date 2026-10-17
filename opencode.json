@@ -10,7 +10,7 @@
   "agents": {
     "qf-plan": {
       "description": "QuantFlow spec author. Reads design inputs, writes proposal/specs/design/tasks.",
-      "steps": 20,
+      "steps": 40,
       "permissions": [
         {
           "action": "*",
@@ -101,7 +101,7 @@
     },
     "qf-build": {
       "description": "Implementer. Writes code and tests; runs ruff, mypy, pytest.",
-      "steps": 50,
+      "steps": 100,
       "permissions": [
         {
           "action": "subagent",
