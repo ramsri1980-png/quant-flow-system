@@ -21,6 +21,7 @@ MUST resolve inside `migrations/<store>/` with the form `NNN_<slug>.sql`.
 
 from __future__ import annotations
 
+import hashlib
 import heapq
 import json
 import re
@@ -354,6 +355,29 @@ def apply_order(manifest: Manifest, store: Store) -> tuple[ManifestEntry, ...]:
     if len(ordered) != len(nodes):
         raise MigrationValidationError(f"dependency cycle among enabled {store.value} migrations")
     return tuple(ordered)
+
+
+def verify_checksums(manifest: Manifest, migrations_root: Path) -> None:
+    """Fail closed unless every file's exact bytes hash to its manifest SHA-256.
+
+    Forward-only: an applied migration is never edited, so any on-disk/manifest
+    mismatch is a hard error raised before anything is applied.
+    """
+    for entry in manifest.entries:
+        path = migrations_root / entry.path
+        try:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        except FileNotFoundError as exc:
+            raise MigrationValidationError(f"migration file missing: {entry.path}") from exc
+        except OSError as exc:
+            raise MigrationValidationError(
+                f"cannot read migration file {entry.path}: {exc}"
+            ) from exc
+        if digest != entry.sha256:
+            raise MigrationValidationError(
+                f"checksum mismatch for {entry.id!r} ({entry.path}): "
+                f"manifest {entry.sha256} != on-disk {digest}"
+            )
 
 
 def load_manifest(migrations_root: Path) -> Manifest:

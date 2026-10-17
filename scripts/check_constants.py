@@ -40,6 +40,10 @@ STRUCTURAL_ALLOWLIST = {
     "DURATION_NAME_SUFFIXES": "SPEC V1 Sec 19.8.3 Rule 2 naming table",
     "HOST": "POC adapter endpoint config (env-derived; not decision path)",
     "PORT": "POC adapter endpoint config (env-derived; not decision path)",
+    "MANIFEST_FILENAME": "010a brief D1 manifest filename (SPEC/ARCH structural)",
+    "BASELINE_ID": "000_baseline logical ID (SPEC V2 19.2; ARCH V2 C.3; 010a D10)",
+    "NEVER_SLOTS": "NEVER-slot policy (ARCH V2 C.3; 010a D5)",
+    "ADOPT_ONLY_SLOTS": "ADOPT-ONLY slot policy (ARCH V2 C.3; 010a D5)",
 }
 
 
