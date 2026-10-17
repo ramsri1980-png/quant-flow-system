@@ -22,7 +22,7 @@
 - [x] 3.2 Implement the SPEC-defined ledger bootstrap in its own committed transaction (exact DDL, no invented columns); verify bootstrap tests pass and no migration payload contains ledger creation.
 - [x] 3.3 Implement store classification (fresh / already-baselined / legacy abort) using independent schema inspection; verify fresh/legacy/empty-ledger tests pass and a legacy store is never overwritten.
 - [x] 3.4 Implement `000_baseline` ledger identity: `migration_id='000_baseline'`, lowercase SHA-256 of exact file bytes, `app_version` from `importlib.metadata.version("quantflow")`, Clock-port `applied_at`, `result='OK'` only on success; verify no sentinel is ever written and a missing package version fails with a packaging error.
-- [ ] 3.5 Implement baseline dependency closure (`applies_after:["000_baseline"]` requires the OK baseline row; `baseline_covered` is never an OK row); verify closure tests pass.
+- [x] 3.5 Implement baseline dependency closure (`applies_after:["000_baseline"]` requires the OK baseline row; `baseline_covered` is never an OK row); verify closure tests pass.
 
 ## 4. Atomic runner
 
