@@ -5,12 +5,18 @@ from __future__ import annotations
 import hashlib
 import sys
 from pathlib import Path
+from typing import Any
 
 import typer
 
+from quantflow.adapters.clock import SystemClock
+from quantflow.domain.errors import (
+    MigrationLedgerError,
+    MigrationManifestError,
+    MigrationValidationError,
+)
 from quantflow.migrations import manifest as m
 from quantflow.migrations import runner as r
-from quantflow.adapters.clock import SystemClock
 
 app = typer.Typer(
     help="QuantFlow operator CLI.",
@@ -49,7 +55,7 @@ def apply(
         # Get connection based on store type
         if store_obj is m.Store.SQLITE:
             db_path = manifest_path.parent / "quant_state.db"
-            conn = r.open_standalone_sqlite(db_path)
+            conn: Any = r.open_standalone_sqlite(db_path)
             r.verify_sqlite_pragmas(conn)
         else:  # DUCKDB
             db_path = manifest_path.parent / "quant_flow.duckdb"
@@ -58,25 +64,27 @@ def apply(
 
         try:
             # Apply migrations
-            result = r.apply_store(conn, store_obj, manifest_obj, manifest_path.parent, SystemClock())
+            result = r.apply_store(
+                conn, store_obj, manifest_obj, manifest_path.parent, SystemClock()
+            )
             typer.echo(
                 f"Successfully applied {len(result.applied)} migration(s) to {store_obj.value} store."
             )
             if result.skipped:
                 typer.echo(f"Skipped {len(result.skipped)} already-applied migration(s).")
-        except r.MigrationLedgerError as exc:
+        except MigrationLedgerError as exc:
             typer.echo(f"Migration failed: {exc}", err=True)
             raise typer.Exit(code=1) from None
-        except r.MigrationValidationError as exc:
+        except MigrationValidationError as exc:
             typer.echo(f"Validation error: {exc}", err=True)
             raise typer.Exit(code=1) from None
         finally:
             conn.close()
 
-    except m.MigrationManifestError as exc:
+    except MigrationManifestError as exc:
         typer.echo(f"Manifest error: {exc}", err=True)
         raise typer.Exit(code=2) from None
-    except m.MigrationValidationError as exc:
+    except MigrationValidationError as exc:
         typer.echo(f"Validation error: {exc}", err=True)
         raise typer.Exit(code=1) from None
     except Exception as exc:
@@ -103,7 +111,7 @@ def status(
             if not db_path.exists():
                 typer.echo("Store does not exist (no database file)", err=True)
                 raise typer.Exit(code=2) from None
-            conn = r.open_standalone_sqlite(db_path)
+            conn: Any = r.open_standalone_sqlite(db_path)
             r.verify_sqlite_pragmas(conn)
         else:  # DUCKDB
             db_path = Path("quant_flow.duckdb")
@@ -147,10 +155,10 @@ def status(
             else:
                 typer.echo("Failed migrations: None")
 
-        except r.MigrationLedgerError as exc:
+        except MigrationLedgerError as exc:
             typer.echo(f"Ledger error: {exc}", err=True)
             raise typer.Exit(code=1) from None
-        except r.MigrationValidationError as exc:
+        except MigrationValidationError as exc:
             typer.echo(f"Validation error: {exc}", err=True)
             raise typer.Exit(code=1) from None
         finally:
@@ -189,7 +197,7 @@ def verify(
             if not db_path.exists():
                 typer.echo(f"Database not found: {db_path}", err=True)
                 raise typer.Exit(code=1) from None
-            conn = r.open_standalone_sqlite(db_path)
+            conn: Any = r.open_standalone_sqlite(db_path)
             r.verify_sqlite_pragmas(conn)
         else:  # DUCKDB
             db_path = manifest_path.parent / "quant_flow.duckdb"
@@ -204,7 +212,7 @@ def verify(
             for entry in manifest_obj.entries:
                 path = manifest_path.parent / entry.path
                 if not path.is_file():
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         f"manifest entry {entry.id!r}: file not found at {path}"
                     )
 
@@ -212,12 +220,12 @@ def verify(
                 try:
                     digest = hashlib.sha256(path.read_bytes()).hexdigest()
                 except OSError as exc:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         f"cannot read migration file {entry.path}: {exc}"
                     ) from exc
 
                 if digest != entry.sha256:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         f"checksum mismatch for {entry.id!r}: "
                         f"manifest {entry.sha256} != on-disk {digest}"
                     )
@@ -225,7 +233,7 @@ def verify(
             # 2. Verify ledger consistency (read-only)
             # Check that ledger table exists
             if not r.ledger_exists(conn, store_obj):
-                raise m.MigrationValidationError(
+                raise MigrationValidationError(
                     f"ledger table {r.ledger_table(store_obj)} not found in {store_obj.value} store"
                 )
 
@@ -237,12 +245,12 @@ def verify(
             for entry in manifest_obj.entries:
                 ledger_row = ledger_id_to_row.get(entry.id)
                 if ledger_row is None:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         f"manifest entry {entry.id!r}: not found in ledger"
                     )
 
                 if entry.sha256 != ledger_row.checksum:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         f"checksum mismatch for {entry.id!r}: "
                         f"manifest {entry.sha256} != ledger {ledger_row.checksum}"
                     )
@@ -251,7 +259,7 @@ def verify(
             manifest_ids = {entry.id for entry in manifest_obj.entries}
             for ledger_row in ledger_rows:
                 if ledger_row.migration_id not in manifest_ids:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         f"ledger contains unknown migration {ledger_row.migration_id!r}"
                     )
 
@@ -259,7 +267,7 @@ def verify(
             failed_rows = [row for row in ledger_rows if row.result == r.LedgerResult.FAILED]
             if failed_rows:
                 failed_ids = [row.migration_id for row in failed_rows]
-                raise m.MigrationValidationError(
+                raise MigrationValidationError(
                     f"store {store_obj.value} has failed migration(s) {sorted(failed_ids)}; "
                     f"apply aborts until they are explicitly resolved"
                 )
@@ -268,12 +276,12 @@ def verify(
             for entry in manifest_obj.entries:
                 if entry.store is store_obj:
                     if entry.slot in m.NEVER_SLOTS[entry.store]:
-                        raise m.MigrationValidationError(
+                        raise MigrationValidationError(
                             f"migration {entry.id!r} uses a reserved {entry.store.value} slot "
                             f"({entry.slot:03d})"
                         )
                     if entry.slot in m.ADOPT_ONLY_SLOTS[entry.store]:
-                        raise m.MigrationValidationError(
+                        raise MigrationValidationError(
                             f"migration {entry.id!r} is ADOPT-ONLY and cannot be applied "
                             f"(requires operator approval)"
                         )
@@ -281,7 +289,7 @@ def verify(
             # 7. Verify all entries are enabled
             for entry in manifest_obj.entries:
                 if not entry.enabled:
-                    raise m.MigrationValidationError(f"migration {entry.id!r} is disabled")
+                    raise MigrationValidationError(f"migration {entry.id!r} is disabled")
 
             # 8. Verify dependency closure against OK ledger rows
             applied_ok_ids = {
@@ -294,25 +302,25 @@ def verify(
             if baseline_entry:
                 baseline_ledger_row = ledger_id_to_row.get("000_baseline")
                 if baseline_ledger_row is None:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         "baseline migration '000_baseline' declared in manifest but not found in ledger"
                     )
                 if baseline_ledger_row.result != r.LedgerResult.OK:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         "baseline migration '000_baseline' must have OK result in ledger"
                     )
                 if baseline_entry.sha256 != baseline_ledger_row.checksum:
-                    raise m.MigrationValidationError(
+                    raise MigrationValidationError(
                         "baseline migration '000_baseline' checksum mismatch between manifest and ledger"
                     )
 
             # All checks passed
             typer.echo("Verification successful: store/manifest/ledger are consistent")
 
-        except m.MigrationManifestError as exc:
+        except MigrationManifestError as exc:
             typer.echo(f"Manifest error: {exc}", err=True)
             raise typer.Exit(code=2) from None
-        except m.MigrationValidationError as exc:
+        except MigrationValidationError as exc:
             typer.echo(f"Validation error: {exc}", err=True)
             raise typer.Exit(code=1) from None
         finally:
@@ -348,7 +356,7 @@ def retry_failed(
             if not db_path.exists():
                 typer.echo(f"Database not found: {db_path}", err=True)
                 raise typer.Exit(code=2) from None
-            conn = r.open_standalone_sqlite(db_path)
+            conn: Any = r.open_standalone_sqlite(db_path)
             r.verify_sqlite_pragmas(conn)
         else:  # DUCKDB
             db_path = Path("quant_flow.duckdb")
@@ -411,8 +419,11 @@ def retry_failed(
             # 3. Perform the retry: DELETE FAILED row, re-apply migration, write audit log
             conn.execute("BEGIN")
             try:
-                # Delete the FAILED row (table name is from a fixed vocabulary)  # noqa: S608
-                conn.execute("DELETE FROM " + r.ledger_table(store_obj) + " WHERE migration_id = ?", (migration_id,))  # noqa: S608
+                # Delete the FAILED row (table name is from a fixed vocabulary)
+                conn.execute(
+                    "DELETE FROM " + r.ledger_table(store_obj) + " WHERE migration_id = ?",  # noqa: S608
+                    (migration_id,),
+                )
 
                 # If we have manifest, re-apply the migration
                 if manifest_path.exists():
@@ -438,10 +449,10 @@ def retry_failed(
                 conn.execute("ROLLBACK")
                 raise
 
-        except r.MigrationLedgerError as exc:
+        except MigrationLedgerError as exc:
             typer.echo(f"Ledger error: {exc}", err=True)
             raise typer.Exit(code=1) from None
-        except r.MigrationValidationError as exc:
+        except MigrationValidationError as exc:
             typer.echo(f"Validation error: {exc}", err=True)
             raise typer.Exit(code=1) from None
         finally:
@@ -460,7 +471,7 @@ def main() -> None:
     try:
         app()
     except typer.Exit as e:
-        sys.exit(e.no)
+        sys.exit(e.exit_code)
     except Exception as exc:
         typer.echo(f"Fatal error: {exc}", err=True)
         sys.exit(1)
