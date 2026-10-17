@@ -13,7 +13,7 @@
 - [x] 2.2 Implement manifest loading and schema validation (`{id, store, path, sha256, applies_after, component, enabled}`) including path safety and `NNN_<slug>.sql` form; verify 2.1 schema/path/duplicate tests pass.
 - [x] 2.3 Implement slot-policy and unmanifested-file validation; verify the NEVER/ADOPT-ONLY/unmanifested tests pass.
 - [x] 2.4 Implement store-local dependency existence, cycle detection, and stable topological order (no `MAX(migration_id)`); verify closure/cycle/ordering tests pass and ordering is identical across runs.
-- [ ] 2.5 Implement per-store `baseline_covered` metadata parsing/validation (informational only); verify a malformed coverage section fails closed.
+- [x] 2.5 Implement per-store `baseline_covered` metadata parsing/validation (informational only); verify a malformed coverage section fails closed.
 - [ ] 2.6 Add on-disk SHA-256 verification against the manifest and forward-only/immutability assertions; verify the checksum-mismatch test fails closed.
 
 ## 3. Ledger, classification, and baseline identity

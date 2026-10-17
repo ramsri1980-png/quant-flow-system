@@ -379,6 +379,19 @@ class TestBaselineCoverage:
         with pytest.raises(MigrationManifestError):
             m.parse_manifest(_doc(_entry(), baseline_covered=coverage))
 
+    def test_empty_string_coverage_id_fails_closed(self) -> None:
+        with pytest.raises(MigrationManifestError):
+            m.parse_manifest(_doc(_entry(), baseline_covered={"sqlite": [""]}))
+
+    def test_nested_coverage_item_fails_closed(self) -> None:
+        with pytest.raises(MigrationManifestError):
+            m.parse_manifest(_doc(_entry(), baseline_covered={"sqlite": [["050_hist"]]}))
+
+    def test_absent_coverage_defaults_to_empty(self) -> None:
+        man = m.parse_manifest(_doc(_entry()))
+        assert man.covered_ids(m.Store.SQLITE) == ()
+        assert man.covered_ids(m.Store.DUCKDB) == ()
+
     def test_coverage_is_informational_not_an_ok_row(self) -> None:
         man = m.parse_manifest(_doc(_entry(), baseline_covered={"sqlite": ["050_hist"]}))
         assert "050_hist" not in {e.id for e in man.entries}
